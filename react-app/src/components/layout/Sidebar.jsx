@@ -1,29 +1,26 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, PlusCircle, FileText, User, Users,
+  LayoutDashboard, PlusCircle, FileText, Users,
   Shield, ClipboardList, X, LogOut, ClipboardCheck, Building2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const NAV = {
   CIUDADANO: [
-    { to: '/dashboard',          icon: LayoutDashboard, label: 'Inicio' },
-    { to: '/mis-incidencias/nueva', icon: PlusCircle,   label: 'Reportar Incidencia' },
-    { to: '/mis-incidencias',    icon: FileText,        label: 'Mis Incidencias' },
-    { to: '/perfil',             icon: User,            label: 'Mi Perfil' },
+    { to: '/dashboard',             icon: LayoutDashboard, label: 'Inicio' },
+    { to: '/mis-incidencias/nueva', icon: PlusCircle,      label: 'Reportar Incidencia' },
+    { to: '/mis-incidencias',       icon: FileText,        label: 'Mis Incidencias' },
   ],
   ADMINISTRADOR: [
-    { to: '/dashboard',          icon: LayoutDashboard, label: 'Inicio' },
-    { to: '/admin/incidencias',  icon: ClipboardList,   label: 'Incidencias' },
-    { to: '/admin/entidades',    icon: Building2,       label: 'Entidades' },
-    { to: '/admin/usuarios',     icon: Users,           label: 'Usuarios' },
-    { to: '/admin/auditoria',    icon: Shield,          label: 'Auditoría' },
-    { to: '/perfil',             icon: User,            label: 'Mi Perfil' },
+    { to: '/dashboard',         icon: LayoutDashboard, label: 'Inicio' },
+    { to: '/admin/incidencias', icon: ClipboardList,   label: 'Incidencias' },
+    { to: '/admin/entidades',   icon: Building2,       label: 'Entidades' },
+    { to: '/admin/usuarios',    icon: Users,           label: 'Usuarios' },
+    { to: '/admin/auditoria',   icon: Shield,          label: 'Auditoría' },
   ],
   ENTIDAD_PUBLICA: [
     { to: '/dashboard',           icon: LayoutDashboard, label: 'Inicio' },
     { to: '/entidad/incidencias', icon: ClipboardCheck,  label: 'Asignadas' },
-    { to: '/perfil',              icon: User,            label: 'Mi Perfil' },
   ],
 };
 
@@ -80,21 +77,6 @@ const Sidebar = ({ isOpen, onClose }) => {
           >
             <X className="h-5 w-5" />
           </button>
-        </div>
-
-        {/* User info */}
-        <div className="px-4 py-4 border-b border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-sm font-bold">
-                {user?.nombre?.[0]?.toUpperCase()}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-white text-sm font-semibold truncate">{user?.nombre}</p>
-              <p className="text-slate-400 text-xs truncate">{user?.email}</p>
-            </div>
-          </div>
         </div>
 
         {/* Nav links */}
