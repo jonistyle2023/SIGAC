@@ -10,6 +10,7 @@ import com.example.sigac.exception.BadRequestException;
 import com.example.sigac.exception.ResourceNotFoundException;
 import com.example.sigac.exception.UnauthorizedException;
 import com.example.sigac.model.*;
+import com.example.sigac.repository.EntidadRepository;
 import com.example.sigac.repository.IncidenciaMultimediaRepository;
 import com.example.sigac.repository.IncidenciaRepository;
 import com.example.sigac.repository.UsuarioRepository;
@@ -36,6 +37,7 @@ public class IncidenciaService {
     private final IncidenciaRepository incidenciaRepository;
     private final IncidenciaMultimediaRepository multimediaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final EntidadRepository entidadRepository;
     private final AuditService auditService;
     private final S3Service s3Service;
     private final ApplicationEventPublisher eventPublisher;
@@ -93,11 +95,15 @@ public class IncidenciaService {
 
     @Transactional(readOnly = true)
     public Page<IncidenciaResponse> obtenerPorEntidad(int page, int size, EstadoIncidencia estado) {
-        Usuario entidad = obtenerUsuarioAutenticado();
+        Usuario funcionario = obtenerUsuarioAutenticado();
+        if (funcionario.getEntidad() == null) {
+            throw new BadRequestException("El usuario no pertenece a ninguna entidad");
+        }
+        Long entidadId = funcionario.getEntidad().getId();
         Pageable pageable = PageRequest.of(page, size);
         Page<Incidencia> resultado = estado != null
-                ? incidenciaRepository.findByEntidadAsignadaIdAndEstadoOrderByFechaCreacionDesc(entidad.getId(), estado, pageable)
-                : incidenciaRepository.findByEntidadAsignadaIdOrderByFechaCreacionDesc(entidad.getId(), pageable);
+                ? incidenciaRepository.findByEntidadAsignadaIdAndEstadoOrderByFechaCreacionDesc(entidadId, estado, pageable)
+                : incidenciaRepository.findByEntidadAsignadaIdOrderByFechaCreacionDesc(entidadId, pageable);
         return resultado.map(this::convertToDTOSummary);
     }
 
@@ -140,13 +146,13 @@ public class IncidenciaService {
         Incidencia incidencia = obtenerIncidenciaOFail(id);
 
         if (actor.getRol() == Role.ENTIDAD_PUBLICA) {
-            if (incidencia.getEntidadAsignada() == null ||
-                    !incidencia.getEntidadAsignada().getId().equals(actor.getId())) {
+            if (actor.getEntidad() == null || incidencia.getEntidadAsignada() == null ||
+                    !incidencia.getEntidadAsignada().getId().equals(actor.getEntidad().getId())) {
                 throw new UnauthorizedException("Solo puede cambiar el estado de incidencias asignadas a su entidad");
             }
             EstadoIncidencia nuevo = request.getEstado();
-            if (nuevo != EstadoIncidencia.RESUELTO && nuevo != EstadoIncidencia.RECHAZADO) {
-                throw new BadRequestException("Las entidades solo pueden cambiar el estado a RESUELTO o RECHAZADO");
+            if (nuevo != EstadoIncidencia.RESUELTO && nuevo != EstadoIncidencia.RECHAZADO && nuevo != EstadoIncidencia.EN_PROCESO) {
+                throw new BadRequestException("Las entidades solo pueden cambiar el estado a EN_PROCESO, RESUELTO o RECHAZADO");
             }
         }
 
@@ -173,12 +179,9 @@ public class IncidenciaService {
         Usuario actor = obtenerUsuarioAutenticado();
         Incidencia incidencia = obtenerIncidenciaOFail(id);
 
-        Usuario entidad = usuarioRepository.findById(request.getEntidadId())
+        Entidad entidad = entidadRepository.findById(request.getEntidadId())
                 .orElseThrow(() -> new ResourceNotFoundException("Entidad no encontrada"));
 
-        if (entidad.getRol() != Role.ENTIDAD_PUBLICA) {
-            throw new BadRequestException("El usuario seleccionado no es una entidad pública");
-        }
         if (!entidad.getActivo()) {
             throw new BadRequestException("La entidad seleccionada está inactiva");
         }
@@ -195,10 +198,11 @@ public class IncidenciaService {
 
         auditService.log(AuditAction.INCIDENT_ASSIGN, "incidencia", guardada.getId(),
                 entidadAnteriorId != null ? "entidad=" + entidadAnteriorId : null,
-                "entidad=" + entidad.getId(),
+                "entidad=" + entidad.getId() + "(" + entidad.getNombre() + ")",
                 actor.getId(), actor.getEmail(), actor.getRol().name());
 
-        log.info("Incidencia {} asignada a entidad {} por {}", guardada.getId(), entidad.getEmail(), actor.getEmail());
+        log.info("Incidencia {} asignada a entidad {}({}) por {}",
+                guardada.getId(), entidad.getNombre(), entidad.getId(), actor.getEmail());
         return convertToDTO(guardada);
     }
 
@@ -324,8 +328,8 @@ public class IncidenciaService {
             throw new UnauthorizedException("No tiene permisos para ver esta incidencia");
         }
         if (usuario.getRol() == Role.ENTIDAD_PUBLICA &&
-                (incidencia.getEntidadAsignada() == null ||
-                        !incidencia.getEntidadAsignada().getId().equals(usuario.getId()))) {
+                (usuario.getEntidad() == null || incidencia.getEntidadAsignada() == null ||
+                        !incidencia.getEntidadAsignada().getId().equals(usuario.getEntidad().getId()))) {
             throw new UnauthorizedException("No tiene permisos para ver esta incidencia");
         }
     }
@@ -380,6 +384,7 @@ public class IncidenciaService {
                 .ciudadanoEmail(incidencia.getCiudadano().getEmail())
                 .entidadAsignadaId(incidencia.getEntidadAsignada() != null ? incidencia.getEntidadAsignada().getId() : null)
                 .entidadAsignadaNombre(incidencia.getEntidadAsignada() != null ? incidencia.getEntidadAsignada().getNombre() : null)
+                .entidadAsignadaTipo(incidencia.getEntidadAsignada() != null ? incidencia.getEntidadAsignada().getTipo().name() : null)
                 .latitud(incidencia.getLatitud())
                 .longitud(incidencia.getLongitud())
                 .direccionReferencia(incidencia.getDireccionReferencia())

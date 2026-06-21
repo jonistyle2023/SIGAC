@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, User, Tag, Loader2, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import incidenciaService from '../../services/incidencia.service';
-import usuarioService from '../../services/usuario.service';
+import entidadService from '../../services/entidad.service';
 import { StatusBadge, CategoryBadge, PriorityBadge } from '../../components/ui/StatusBadge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 
@@ -29,10 +29,8 @@ const AdminIncidenciaDetalle = () => {
       });
 
   useEffect(() => {
-    Promise.all([loadInc(), usuarioService.obtenerTodosActivos()])
-      .then(([, usersRes]) => {
-        setEntidades(usersRes.data.filter(u => u.rol === 'ENTIDAD_PUBLICA'));
-      })
+    Promise.all([loadInc(), entidadService.obtenerActivas()])
+      .then(([, entRes]) => setEntidades(entRes.data))
       .catch(() => toast.error('Error al cargar los datos'))
       .finally(() => setLoading(false));
   }, [id]);
@@ -154,7 +152,7 @@ const AdminIncidenciaDetalle = () => {
               <select className={selectClass} value={selectedEntidad} onChange={e => setSelectedEntidad(e.target.value)}>
                 <option value="">Sin asignar</option>
                 {entidades.map(e => (
-                  <option key={e.id} value={e.id}>{e.nombre} {e.apellido}</option>
+                  <option key={e.id} value={e.id}>{e.nombre} ({e.tipo?.replace('_', ' ')})</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />

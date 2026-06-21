@@ -22,6 +22,7 @@ public class IncidenciaResponse {
 
     private Long entidadAsignadaId;
     private String entidadAsignadaNombre;
+    private String entidadAsignadaTipo;
 
     private BigDecimal latitud;
     private BigDecimal longitud;

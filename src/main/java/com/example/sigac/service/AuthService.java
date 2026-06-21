@@ -7,9 +7,12 @@ import com.example.sigac.dto.request.RegisterEntidadRequest;
 import com.example.sigac.dto.request.RegisterRequest;
 import com.example.sigac.dto.response.AuthResponse;
 import com.example.sigac.exception.BadRequestException;
+import com.example.sigac.exception.ResourceNotFoundException;
 import com.example.sigac.exception.UnauthorizedException;
+import com.example.sigac.model.Entidad;
 import com.example.sigac.model.Role;
 import com.example.sigac.model.Usuario;
+import com.example.sigac.repository.EntidadRepository;
 import com.example.sigac.repository.UsuarioRepository;
 import com.example.sigac.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,7 @@ import java.time.LocalDateTime;
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
+    private final EntidadRepository entidadRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
@@ -193,6 +197,12 @@ public class AuthService {
             throw new BadRequestException("La cédula/RUC ya está registrado");
         }
 
+        Entidad entidad = entidadRepository.findById(request.getEntidadId())
+                .orElseThrow(() -> new ResourceNotFoundException("Entidad no encontrada"));
+        if (!entidad.getActivo()) {
+            throw new BadRequestException("La entidad seleccionada está inactiva");
+        }
+
         Usuario guardado = usuarioRepository.save(Usuario.builder()
                 .cedula(cedula)
                 .email(request.getEmail())
@@ -202,6 +212,7 @@ public class AuthService {
                 .rol(Role.ENTIDAD_PUBLICA)
                 .telefono(request.getTelefono())
                 .direccion(request.getDireccion())
+                .entidad(entidad)
                 .activo(true)
                 .emailVerificado(true)
                 .build());

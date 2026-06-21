@@ -78,6 +78,10 @@ public class Usuario implements UserDetails, Serializable {
     @Column(name = "ultimo_acceso")
     private LocalDateTime ultimoAcceso;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "entidad_id", nullable = true)
+    private Entidad entidad;
+
     @PreUpdate
     protected void onUpdate() {
         fechaActualizacion = LocalDateTime.now();

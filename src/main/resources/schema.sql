@@ -1,4 +1,21 @@
 -- ─────────────────────────────────────────────────────────────────────────────
+-- Módulo 5: Entidades (debe ir antes que usuarios por la FK)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS entidades (
+    id               BIGINT       NOT NULL AUTO_INCREMENT,
+    nombre           VARCHAR(150) NOT NULL,
+    tipo             ENUM('BOMBEROS','POLICIA','TRANSITO','AMBULANCIA','MEDIO_AMBIENTE','OTRO') NOT NULL,
+    descripcion      VARCHAR(500) NULL,
+    telefono         VARCHAR(20)  NULL,
+    email_contacto   VARCHAR(255) NULL,
+    activo           BOOLEAN      NOT NULL DEFAULT TRUE,
+    fecha_creacion   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion DATETIME  NULL ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY UK_entidad_nombre (nombre)
+);
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Tabla principal de usuarios
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -16,9 +33,11 @@ CREATE TABLE IF NOT EXISTS usuarios (
     fecha_creacion     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP   ON UPDATE CURRENT_TIMESTAMP,
     ultimo_acceso      TIMESTAMP    NULL,
+    entidad_id         BIGINT       NULL,
     PRIMARY KEY (id),
     CONSTRAINT UK_email   UNIQUE (email),
-    CONSTRAINT UK_cedula  UNIQUE (cedula)
+    CONSTRAINT UK_cedula  UNIQUE (cedula),
+    CONSTRAINT FK_usuario_entidad FOREIGN KEY (entidad_id) REFERENCES entidades(id)
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -32,7 +51,7 @@ CREATE TABLE IF NOT EXISTS incidencias (
     estado               ENUM('PENDIENTE','EN_REVISION','EN_PROCESO','RESUELTO','RECHAZADO') NOT NULL DEFAULT 'PENDIENTE',
     prioridad            ENUM('BAJA','MEDIA','ALTA','CRITICA') NOT NULL DEFAULT 'MEDIA',
     ciudadano_id         BIGINT        NOT NULL,
-    entidad_asignada_id  BIGINT        NULL,
+    entidad_asignada_id  BIGINT        NULL,   -- referencia a entidades(id)
     latitud              DECIMAL(10,8) NULL,
     longitud             DECIMAL(11,8) NULL,
     direccion_referencia VARCHAR(500)  NULL,
@@ -47,7 +66,7 @@ CREATE TABLE IF NOT EXISTS incidencias (
     ia_razon_rechazo     VARCHAR(500)  NULL,
     PRIMARY KEY (id),
     CONSTRAINT FK_incidencia_ciudadano      FOREIGN KEY (ciudadano_id)        REFERENCES usuarios(id),
-    CONSTRAINT FK_incidencia_entidad        FOREIGN KEY (entidad_asignada_id) REFERENCES usuarios(id),
+    CONSTRAINT FK_incidencia_entidad        FOREIGN KEY (entidad_asignada_id) REFERENCES entidades(id),
     INDEX idx_incidencia_ciudadano  (ciudadano_id),
     INDEX idx_incidencia_entidad    (entidad_asignada_id),
     INDEX idx_incidencia_estado     (estado),

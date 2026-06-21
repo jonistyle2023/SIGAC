@@ -24,4 +24,8 @@ public class UsuarioResponse {
     private String fechaCreacion;
     private String fechaActualizacion;
     private String ultimoAcceso;
+
+    private Long entidadId;
+    private String entidadNombre;
+    private String entidadTipo;
 }

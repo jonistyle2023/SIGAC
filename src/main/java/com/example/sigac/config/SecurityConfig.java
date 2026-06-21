@@ -107,6 +107,10 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.DELETE, "/api/usuarios/**").hasRole("ADMINISTRADOR")
                     .requestMatchers(HttpMethod.POST, "/api/auth/register-admin", "/api/auth/register-admin/").hasRole("ADMINISTRADOR")
                     .requestMatchers(HttpMethod.POST, "/api/auth/register-entidad", "/api/auth/register-entidad/").hasRole("ADMINISTRADOR")
+                    // Entidades: GET /activas accesible por entidades; resto solo admin
+                    .requestMatchers(HttpMethod.GET, "/api/entidades/activas").hasAnyRole("ADMINISTRADOR", "ENTIDAD_PUBLICA")
+                    .requestMatchers(HttpMethod.GET, "/api/entidades/**").hasRole("ADMINISTRADOR")
+                    .requestMatchers("/api/entidades/**").hasRole("ADMINISTRADOR")
                     // Incidencias: acceso general autenticado (control fino con @PreAuthorize en servicios)
                     .requestMatchers("/api/incidencias/**").authenticated()
                     // Auditoría: solo administradores

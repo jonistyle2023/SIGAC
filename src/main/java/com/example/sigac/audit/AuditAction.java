@@ -24,8 +24,12 @@ public enum AuditAction {
     // Módulo 4: Clasificación IA
     INCIDENT_AI_CLASSIFIED,
 
-    // Módulo 5: Asignación (reservado)
+    // Módulo 5: Asignación y Despacho
     INCIDENT_ASSIGN,
+    ENTITY_CREATE,
+    ENTITY_UPDATE,
+    ENTITY_DELETE,
+    ENTITY_TOGGLE,
 
     // Módulo 7: Reportería (reservado)
     REPORT_EXPORT

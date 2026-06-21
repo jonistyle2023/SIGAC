@@ -24,6 +24,7 @@ const AdminIncidencias  = lazy(() => import('./pages/admin/Incidencias'));
 const AdminIncidencia   = lazy(() => import('./pages/admin/IncidenciaDetalle'));
 const AdminUsuarios     = lazy(() => import('./pages/admin/Usuarios'));
 const AdminAuditoria    = lazy(() => import('./pages/admin/Auditoria'));
+const AdminEntidades    = lazy(() => import('./pages/admin/Entidades'));
 
 // Entidad
 const EntidadIncidencias  = lazy(() => import('./pages/entidad/Incidencias'));
@@ -88,6 +89,11 @@ function App() {
               <Route path="/admin/auditoria" element={
                 <RoleRoute allowedRoles={['ADMINISTRADOR']}>
                   <AdminAuditoria />
+                </RoleRoute>
+              } />
+              <Route path="/admin/entidades" element={
+                <RoleRoute allowedRoles={['ADMINISTRADOR']}>
+                  <AdminEntidades />
                 </RoleRoute>
               } />
 

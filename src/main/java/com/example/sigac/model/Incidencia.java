@@ -49,7 +49,7 @@ public class Incidencia {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "entidad_asignada_id", nullable = true)
-    private Usuario entidadAsignada;
+    private Entidad entidadAsignada;
 
     @Column(precision = 10, scale = 8)
     private BigDecimal latitud;

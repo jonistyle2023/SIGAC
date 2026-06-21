@@ -42,4 +42,7 @@ public class RegisterEntidadRequest {
     private String telefono;
 
     private String direccion;
+
+    @NotNull(message = "Debe seleccionar la entidad a la que pertenece el funcionario")
+    private Long entidadId;
 }

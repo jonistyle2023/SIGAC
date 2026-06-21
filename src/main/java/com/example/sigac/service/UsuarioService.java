@@ -243,6 +243,9 @@ public class UsuarioService {
                 .fechaCreacion(usuario.getFechaCreacion() != null ? usuario.getFechaCreacion().toString() : null)
                 .fechaActualizacion(usuario.getFechaActualizacion() != null ? usuario.getFechaActualizacion().toString() : null)
                 .ultimoAcceso(usuario.getUltimoAcceso() != null ? usuario.getUltimoAcceso().toString() : null)
+                .entidadId(usuario.getEntidad() != null ? usuario.getEntidad().getId() : null)
+                .entidadNombre(usuario.getEntidad() != null ? usuario.getEntidad().getNombre() : null)
+                .entidadTipo(usuario.getEntidad() != null ? usuario.getEntidad().getTipo().name() : null)
                 .build();
     }
 }

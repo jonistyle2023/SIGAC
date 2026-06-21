@@ -112,8 +112,11 @@ const Usuarios = () => {
                     {!u.activo && <span className="text-xs text-red-500 font-medium">Inactivo</span>}
                   </div>
                   <p className="text-xs text-gray-500 truncate">{u.email}</p>
-                  <div className="mt-1.5">
+                  <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                     <RoleBadge rol={u.rol} />
+                    {u.entidadNombre && (
+                      <span className="text-xs text-gray-400">· {u.entidadNombre}</span>
+                    )}
                   </div>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, PlusCircle, FileText, User,
-  ClipboardList, Users, Shield, ClipboardCheck,
+  ClipboardList, Building2, Shield, ClipboardCheck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -13,10 +13,10 @@ const NAV = {
     { to: '/perfil',                icon: User,            label: 'Perfil' },
   ],
   ADMINISTRADOR: [
-    { to: '/dashboard',            icon: LayoutDashboard, label: 'Inicio' },
-    { to: '/admin/incidencias',    icon: ClipboardList,   label: 'Incidencias' },
-    { to: '/admin/usuarios',       icon: Users,           label: 'Usuarios' },
-    { to: '/admin/auditoria',      icon: Shield,          label: 'Auditoría' },
+    { to: '/dashboard',         icon: LayoutDashboard, label: 'Inicio' },
+    { to: '/admin/incidencias', icon: ClipboardList,   label: 'Incidencias' },
+    { to: '/admin/entidades',   icon: Building2,       label: 'Entidades' },
+    { to: '/admin/auditoria',   icon: Shield,          label: 'Auditoría' },
   ],
   ENTIDAD_PUBLICA: [
     { to: '/dashboard',            icon: LayoutDashboard, label: 'Inicio' },
