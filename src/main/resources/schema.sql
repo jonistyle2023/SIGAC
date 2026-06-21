@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     telefono           VARCHAR(20),
     direccion          VARCHAR(500),
     fecha_creacion     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    fecha_actualizacion TIMESTAMP   ON UPDATE CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP   NULL ON UPDATE CURRENT_TIMESTAMP,
     ultimo_acceso      TIMESTAMP    NULL,
     entidad_id         BIGINT       NULL,
     PRIMARY KEY (id),
@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     CONSTRAINT UK_cedula  UNIQUE (cedula),
     CONSTRAINT FK_usuario_entidad FOREIGN KEY (entidad_id) REFERENCES entidades(id)
 );
+
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Tabla de incidencias
