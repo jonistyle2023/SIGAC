@@ -94,6 +94,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/register/").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/login/").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/validate-token", "/api/auth/validate-token/").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/auth/bootstrap-admin", "/api/auth/bootstrap-admin/").permitAll()
                     .requestMatchers("/api-docs").permitAll()
                     .requestMatchers("/swagger-ui.html").permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()

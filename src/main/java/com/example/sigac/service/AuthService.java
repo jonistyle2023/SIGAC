@@ -130,6 +130,49 @@ public class AuthService {
     }
 
     @Transactional
+    public AuthResponse bootstrapAdmin(RegisterRequest request) {
+        if (usuarioRepository.countByRol(Role.ADMINISTRADOR) > 0) {
+            throw new BadRequestException("Ya existe al menos un administrador. Use /register-admin con un token de admin.");
+        }
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException("Las contraseñas no coinciden");
+        }
+        if (usuarioRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("El email ya está registrado");
+        }
+
+        Usuario guardado = usuarioRepository.save(Usuario.builder()
+                .cedula(request.getCedula())
+                .email(request.getEmail())
+                .nombre(request.getNombre())
+                .apellido(request.getApellido())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .rol(Role.ADMINISTRADOR)
+                .telefono(request.getTelefono())
+                .activo(true)
+                .emailVerificado(true)
+                .build());
+
+        auditService.log(AuditAction.REGISTER_ADMINISTRADOR, "usuario", guardado.getId(),
+                null, guardado.getEmail(),
+                guardado.getId(), guardado.getEmail(), guardado.getRol().name());
+
+        String token = jwtTokenProvider.generateToken(guardado.getEmail(), Role.ADMINISTRADOR.name());
+
+        log.info("Admin inicial creado vía bootstrap: {}", guardado.getEmail());
+
+        return AuthResponse.builder()
+                .token(token)
+                .id(guardado.getId())
+                .email(guardado.getEmail())
+                .nombre(guardado.getNombre())
+                .rol(guardado.getRol().name())
+                .exito(true)
+                .mensaje("Administrador inicial creado. Este endpoint ya no estará disponible.")
+                .build();
+    }
+
+    @Transactional
     public AuthResponse registrarAdministrador(RegisterRequest request) {
         log.info("Registrando nuevo administrador con email: {}", request.getEmail());
 

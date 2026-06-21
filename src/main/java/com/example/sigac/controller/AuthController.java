@@ -46,6 +46,18 @@ public class AuthController {
     }
 
     /**
+     * Crear el primer administrador del sistema (solo funciona si no existe ningún admin).
+     * Se auto-deshabilita una vez que hay al menos un administrador registrado.
+     * POST /api/auth/bootstrap-admin
+     */
+    @PostMapping("/bootstrap-admin")
+    public ResponseEntity<AuthResponse> bootstrapAdmin(@Valid @RequestBody RegisterRequest request) {
+        log.info("Solicitud de bootstrap de primer administrador: {}", request.getEmail());
+        AuthResponse response = authService.bootstrapAdmin(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
      * Registrar un nuevo administrador (Solo accesible por administrador existente)
      * POST /api/auth/register-admin
      */
