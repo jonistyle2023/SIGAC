@@ -31,8 +31,7 @@ public class Usuario implements UserDetails, Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "La cédula es obligatoria")
-    @Column(nullable = false, unique = true, length = 20)
+    @Column(nullable = true, unique = true, length = 20)
     private String cedula;
 
     @NotBlank(message = "El correo es obligatorio")

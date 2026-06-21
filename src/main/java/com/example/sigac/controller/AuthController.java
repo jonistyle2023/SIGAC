@@ -1,6 +1,7 @@
 package com.example.sigac.controller;
 
 import com.example.sigac.dto.request.LoginRequest;
+import com.example.sigac.dto.request.RegisterEntidadRequest;
 import com.example.sigac.dto.request.RegisterRequest;
 import com.example.sigac.dto.response.AuthResponse;
 import com.example.sigac.service.AuthService;
@@ -62,7 +63,7 @@ public class AuthController {
      */
     @PostMapping("/register-entidad")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<AuthResponse> registrarEntidadPublica(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> registrarEntidadPublica(@Valid @RequestBody RegisterEntidadRequest request) {
         log.info("Registrando nueva entidad pública: {}", request.getEmail());
         AuthResponse response = authService.registrarEntidadPublica(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

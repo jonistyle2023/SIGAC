@@ -22,5 +22,6 @@ public class UsuarioResponse {
     private String telefono;
     private String direccion;
     private String fechaCreacion;
+    private String fechaActualizacion;
+    private String ultimoAcceso;
 }
-

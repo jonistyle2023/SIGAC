@@ -100,10 +100,17 @@ public class SecurityConfig {
                     .requestMatchers("/v3/api-docs/**").permitAll()
                     // Rutas protegidas
                     .requestMatchers(HttpMethod.GET, "/api/usuarios/**").hasAnyRole("CIUDADANO", "ADMINISTRADOR", "ENTIDAD_PUBLICA")
+                    // Perfil propio: cualquier usuario autenticado (debe ir antes del wildcard admin)
+                    .requestMatchers(HttpMethod.PUT, "/api/usuarios/perfil").hasAnyRole("CIUDADANO", "ADMINISTRADOR", "ENTIDAD_PUBLICA")
+                    .requestMatchers(HttpMethod.PUT, "/api/usuarios/perfil/password").hasAnyRole("CIUDADANO", "ADMINISTRADOR", "ENTIDAD_PUBLICA")
                     .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasRole("ADMINISTRADOR")
                     .requestMatchers(HttpMethod.DELETE, "/api/usuarios/**").hasRole("ADMINISTRADOR")
                     .requestMatchers(HttpMethod.POST, "/api/auth/register-admin", "/api/auth/register-admin/").hasRole("ADMINISTRADOR")
                     .requestMatchers(HttpMethod.POST, "/api/auth/register-entidad", "/api/auth/register-entidad/").hasRole("ADMINISTRADOR")
+                    // Incidencias: acceso general autenticado (control fino con @PreAuthorize en servicios)
+                    .requestMatchers("/api/incidencias/**").authenticated()
+                    // Auditoría: solo administradores
+                    .requestMatchers(HttpMethod.GET, "/api/audit/**").hasRole("ADMINISTRADOR")
                     .anyRequest().authenticated()
             );
 

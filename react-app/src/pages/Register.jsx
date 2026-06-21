@@ -36,7 +36,7 @@ const Register = () => {
         setIsSubmitting(true);
         try {
             await register(formData);
-            navigate('/welcome');
+            navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Error en el registro. Verifica los datos.');
         } finally {

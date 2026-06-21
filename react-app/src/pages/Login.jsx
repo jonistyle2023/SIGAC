@@ -19,7 +19,7 @@ const Login = () => {
 
         try {
             await login(email, password);
-            navigate('/welcome');
+            navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Error al iniciar sesión. Verifica tus credenciales.');
         } finally {
