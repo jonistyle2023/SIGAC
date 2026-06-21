@@ -40,10 +40,10 @@ public class AiClassificationService {
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
 
-    @Value("${anthropic.api.key:}")
-    private String anthropicApiKey;
+    @Value("${gemini.api.key:}")
+    private String geminiApiKey;
 
-    @Value("${anthropic.model:claude-haiku-4-5-20251001}")
+    @Value("${gemini.model:gemini-2.0-flash}")
     private String model;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
@@ -57,9 +57,9 @@ public class AiClassificationService {
     @Async("classificationExecutor")
     public void onIncidenciaCreada(IncidenciaCreatedEvent event) {
         try {
-            ClasificacionIaResult result = anthropicApiKey.isBlank()
+            ClasificacionIaResult result = geminiApiKey.isBlank()
                     ? clasificarPorReglas(event.titulo(), event.descripcion())
-                    : clasificarConIA(event.titulo(), event.descripcion());
+                    : clasificarConGemini(event.titulo(), event.descripcion());
 
             aplicarClasificacion(event.incidenciaId(), result);
 
@@ -72,23 +72,36 @@ public class AiClassificationService {
         }
     }
 
-    // ─── Clasificación con Claude API ────────────────────────────────────────
+    // ─── Clasificación con Gemini API ────────────────────────────────────────
 
-    private ClasificacionIaResult clasificarConIA(String titulo, String descripcion) throws Exception {
-        ObjectNode body = objectMapper.createObjectNode();
-        body.put("model", model);
-        body.put("max_tokens", 512);
-        body.put("system", SYSTEM_PROMPT);
+    private ClasificacionIaResult clasificarConGemini(String titulo, String descripcion) throws Exception {
+        // System instruction
+        ObjectNode systemInstruction = objectMapper.createObjectNode();
+        ArrayNode sysParts = systemInstruction.putArray("parts");
+        sysParts.addObject().put("text", SYSTEM_PROMPT);
 
-        ArrayNode messages = body.putArray("messages");
-        ObjectNode userMsg = messages.addObject();
+        // User message
+        ArrayNode contents = objectMapper.createArrayNode();
+        ObjectNode userMsg = contents.addObject();
         userMsg.put("role", "user");
-        userMsg.put("content", buildUserPrompt(titulo, descripcion));
+        userMsg.putArray("parts").addObject().put("text", buildUserPrompt(titulo, descripcion));
+
+        // Generation config — JSON mode nativo de Gemini
+        ObjectNode generationConfig = objectMapper.createObjectNode();
+        generationConfig.put("responseMimeType", "application/json");
+        generationConfig.put("temperature", 0.1);
+        generationConfig.put("maxOutputTokens", 512);
+
+        ObjectNode body = objectMapper.createObjectNode();
+        body.set("systemInstruction", systemInstruction);
+        body.set("contents", contents);
+        body.set("generationConfig", generationConfig);
+
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/"
+                + model + ":generateContent?key=" + geminiApiKey;
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.anthropic.com/v1/messages"))
-                .header("x-api-key", anthropicApiKey)
-                .header("anthropic-version", "2023-06-01")
+                .uri(URI.create(url))
                 .header("content-type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
                 .timeout(Duration.ofSeconds(30))
@@ -97,16 +110,19 @@ public class AiClassificationService {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
-            log.warn("Anthropic API retornó HTTP {}, usando reglas como fallback", response.statusCode());
+            log.warn("Gemini API retornó HTTP {}, usando reglas como fallback. Body: {}",
+                    response.statusCode(), response.body());
             return clasificarPorReglas(titulo, descripcion);
         }
 
         JsonNode root = objectMapper.readTree(response.body());
-        String text = root.path("content").path(0).path("text").asText();
+        String text = root.path("candidates").path(0)
+                .path("content").path("parts").path(0).path("text").asText();
+
         ClasificacionIaResult result = parsearRespuesta(text);
 
         if (result == null) {
-            log.warn("No se pudo parsear respuesta IA, usando reglas como fallback");
+            log.warn("No se pudo parsear respuesta de Gemini, usando reglas como fallback");
             return clasificarPorReglas(titulo, descripcion);
         }
         return result;
