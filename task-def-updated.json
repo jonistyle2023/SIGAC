@@ -1,0 +1,109 @@
+{
+  "containerDefinitions": [
+    {
+      "name": "sigac-backend",
+      "image": "954096903879.dkr.ecr.us-east-1.amazonaws.com/sigac-backend:fbc0c76c43ff9c5484bda54a8e277b3d464a8ff6",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "DB_URL",
+          "value": "jdbc:mysql://sigacdb.c4pqggsmcpp4.us-east-1.rds.amazonaws.com:3306/sigac"
+        },
+        {
+          "name": "DB_USER",
+          "value": "admin"
+        },
+        {
+          "name": "DB_PASS",
+          "value": "saymyname."
+        },
+        {
+          "name": "JWT_SECRET",
+          "value": "719684674042863638be4d3a074c29fdc77b79a6f9d23617ecdba10e2e239fd75ab38fecc0787e951748f5836a1148f8ddcde453bfb832a6255d005bf8405397"
+        },
+        {
+          "name": "CORS_ALLOWED_ORIGINS",
+          "value": "https://dih930xv8x8fd.cloudfront.net"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "AWS_S3_BUCKET",
+          "value": "sigac-multimedia-prod"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "secrets": [
+        {
+          "name": "DB_URL",
+          "valueFrom": "/sigac/DB_URL"
+        },
+        {
+          "name": "DB_USER",
+          "valueFrom": "/sigac/DB_USER"
+        },
+        {
+          "name": "DB_PASS",
+          "valueFrom": "/sigac/DB_PASS"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "/sigac/JWT_SECRET"
+        },
+        {
+          "name": "CORS_ALLOWED_ORIGINS",
+          "valueFrom": "/sigac/CORS_ALLOWED_ORIGINS"
+        },
+        {
+          "name": "BOOTSTRAP_SECRET",
+          "valueFrom": "/sigac/BOOTSTRAP_SECRET"
+        },
+        {
+          "name": "GEMINI_API_KEY",
+          "valueFrom": "/sigac/GEMINI_API_KEY"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/sigac-backend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8080/actuator/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "systemControls": []
+    }
+  ],
+  "family": "sigac-backend",
+  "taskRoleArn": "arn:aws:iam::954096903879:role/sigacTaskRole",
+  "executionRoleArn": "arn:aws:iam::954096903879:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "volumes": [],
+  "placementConstraints": [],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024"
+}
