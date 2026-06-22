@@ -1,0 +1,1 @@
+ALTER TABLE incidencias MODIFY COLUMN ia_confianza DOUBLE NULL;
