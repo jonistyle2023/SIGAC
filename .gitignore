@@ -2,10 +2,13 @@ HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 **/GEMINI.md
-**/CLAUDE.md
-CLAUDE.md
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+### AWS / CI deployment artifacts ###
+task-def.json
+task-def-updated.json
+task-def-*.json
 
 ### STS ###
 .apt_generated
