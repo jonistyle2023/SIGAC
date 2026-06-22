@@ -19,7 +19,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/incidencias")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class IncidenciaController {
 
     private final IncidenciaService incidenciaService;

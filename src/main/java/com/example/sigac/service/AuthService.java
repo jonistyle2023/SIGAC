@@ -23,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -129,7 +130,7 @@ public class AuthService {
         }
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public AuthResponse bootstrapAdmin(RegisterRequest request) {
         if (usuarioRepository.countByRol(Role.ADMINISTRADOR) > 0) {
             throw new BadRequestException("Ya existe al menos un administrador. Use /register-admin con un token de admin.");

@@ -8,6 +8,7 @@ import com.example.sigac.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,10 +18,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class AuthController {
 
     private final AuthService authService;
+
+    @Value("${bootstrap.secret:}")
+    private String bootstrapSecret;
 
     /**
      * Registrar un nuevo ciudadano
@@ -51,7 +54,12 @@ public class AuthController {
      * POST /api/auth/bootstrap-admin
      */
     @PostMapping("/bootstrap-admin")
-    public ResponseEntity<AuthResponse> bootstrapAdmin(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> bootstrapAdmin(
+            @RequestHeader("X-Bootstrap-Secret") String secret,
+            @Valid @RequestBody RegisterRequest request) {
+        if (bootstrapSecret.isBlank() || !bootstrapSecret.equals(secret)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         log.info("Solicitud de bootstrap de primer administrador: {}", request.getEmail());
         AuthResponse response = authService.bootstrapAdmin(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

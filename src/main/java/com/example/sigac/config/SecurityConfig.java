@@ -4,6 +4,7 @@ import com.example.sigac.security.JwtAuthenticationFilter;
 import com.example.sigac.security.CustomUserDetailsService;
 import com.example.sigac.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -36,6 +38,9 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtTokenProvider jwtTokenProvider;
+
+    @Value("${cors.allowed-origins}")
+    private String allowedOriginsRaw;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -59,12 +64,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "http://127.0.0.1:5173",
-                "http://localhost:3000",
-                "http://127.0.0.1:3000"
-        ));
+        List<String> origins = Arrays.stream(allowedOriginsRaw.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin"));
         configuration.setExposedHeaders(List.of("Authorization"));
@@ -90,15 +94,13 @@ public class SecurityConfig {
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    // Health check de ECS Fargate — sin autenticación
+                    .requestMatchers("/actuator/health").permitAll()
                     // Rutas públicas - todos los endpoints públicos de autenticación
                     .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/register/").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/login/").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/validate-token", "/api/auth/validate-token/").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/bootstrap-admin", "/api/auth/bootstrap-admin/").permitAll()
-                    .requestMatchers("/api-docs").permitAll()
-                    .requestMatchers("/swagger-ui.html").permitAll()
-                    .requestMatchers("/swagger-ui/**").permitAll()
-                    .requestMatchers("/v3/api-docs/**").permitAll()
                     // Rutas protegidas
                     .requestMatchers(HttpMethod.GET, "/api/usuarios/**").hasAnyRole("CIUDADANO", "ADMINISTRADOR", "ENTIDAD_PUBLICA")
                     // Perfil propio: cualquier usuario autenticado (debe ir antes del wildcard admin)

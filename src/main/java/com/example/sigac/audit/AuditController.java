@@ -14,7 +14,6 @@ import java.util.List;
 @RequestMapping("/api/audit")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class AuditController {
 
     private final AuditService auditService;
