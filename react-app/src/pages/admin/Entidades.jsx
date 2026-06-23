@@ -45,7 +45,7 @@ const Modal = ({ title, onClose, onSubmit, form, setForm, saving }) => {
         <form onSubmit={onSubmit} className="p-5 space-y-3">
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Nombre *</label>
-            <input className={inputClass} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} required />
+            <input className={inputClass} placeholder="Ej: Cuerpo de Bomberos Quito" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} required />
           </div>
 
           <div>
@@ -57,21 +57,22 @@ const Modal = ({ title, onClose, onSubmit, form, setForm, saving }) => {
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
+            <p className="text-xs text-gray-400 mt-1">El tipo determina qué clase de incidencias se le pueden asignar a esta entidad.</p>
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Descripción</label>
-            <textarea className={inputClass} rows={2} value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} />
+            <textarea className={inputClass} rows={2} placeholder="Ej: Atención de incendios, rescates y emergencias en el cantón" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Teléfono</label>
-              <input className={inputClass} value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} />
+              <input className={inputClass} placeholder="Ej: 022-555-100" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Email contacto</label>
-              <input type="email" className={inputClass} value={form.emailContacto} onChange={e => setForm(f => ({ ...f, emailContacto: e.target.value }))} />
+              <input type="email" className={inputClass} placeholder="Ej: info@entidad.gob.ec" value={form.emailContacto} onChange={e => setForm(f => ({ ...f, emailContacto: e.target.value }))} />
             </div>
           </div>
 
@@ -122,31 +123,37 @@ const FuncionarioModal = ({ entidad, onClose }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-3">
+          {/* Info box */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
+            El funcionario podrá iniciar sesión con su email y contraseña para ver y gestionar las incidencias asignadas a <strong>{entidad.nombre}</strong>.
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Nombre *</label>
-              <input className={inputClass} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} required />
+              <input className={inputClass} placeholder="Ej: Carlos" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} required />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Apellido</label>
-              <input className={inputClass} value={form.apellido} onChange={e => setForm(f => ({ ...f, apellido: e.target.value }))} />
+              <input className={inputClass} placeholder="Ej: Mendoza" value={form.apellido} onChange={e => setForm(f => ({ ...f, apellido: e.target.value }))} />
             </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Email *</label>
-            <input type="email" className={inputClass} value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
+            <input type="email" className={inputClass} placeholder="Ej: cmendoza@entidad.gob.ec" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
+            <p className="text-xs text-gray-400 mt-1">Con este correo el funcionario iniciará sesión.</p>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Teléfono</label>
-            <input className={inputClass} value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} />
+            <input className={inputClass} placeholder="Ej: 0991234567" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Contraseña *</label>
-            <input type="password" className={inputClass} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required />
+            <input type="password" className={inputClass} placeholder="Mínimo 8 caracteres" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Confirmar contraseña *</label>
-            <input type="password" className={inputClass} value={form.confirmPassword} onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))} required />
+            <input type="password" className={inputClass} placeholder="Repite la contraseña" value={form.confirmPassword} onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))} required />
           </div>
 
           <div className="flex gap-2 pt-2">

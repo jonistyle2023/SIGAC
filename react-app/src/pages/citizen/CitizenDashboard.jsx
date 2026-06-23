@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Clock, CheckCircle, PlusCircle, ChevronRight } from 'lucide-react';
+import { FileText, Clock, CheckCircle, PlusCircle, ChevronRight, Send, Search, Wrench } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import incidenciaService from '../../services/incidencia.service';
 import { StatCard } from '../../components/ui/StatCard';
@@ -61,6 +61,45 @@ const CitizenDashboard = () => {
         Reportar nueva incidencia
       </Link>
 
+      {/* Guía de inicio — solo si no hay incidencias */}
+      {!loading && data.total === 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <h2 className="text-sm font-bold text-gray-800 mb-4">¿Cómo funciona SIGAC?</h2>
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Send className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">1. Reportas el problema</p>
+                <p className="text-xs text-gray-500 mt-0.5">Describes qué pasó, dónde y adjuntas fotos si tienes. Solo toma 2 minutos.</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <Search className="h-4 w-4 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">2. Se revisa y asigna</p>
+                <p className="text-xs text-gray-500 mt-0.5">Un administrador revisa tu reporte y lo envía a la entidad responsable (bomberos, policía, municipio, etc.).</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <Wrench className="h-4 w-4 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">3. La entidad lo resuelve</p>
+                <p className="text-xs text-gray-500 mt-0.5">La entidad trabaja en el problema y marca el caso como resuelto. Puedes ver el progreso aquí en tiempo real.</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-400 text-center">Tu primer reporte es el primer paso. ¡Empieza ahora!</p>
+          </div>
+        </div>
+      )}
+
       {/* Recent */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -71,8 +110,8 @@ const CitizenDashboard = () => {
         </div>
 
         {loading ? <LoadingSpinner /> : data.recent.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 text-sm">
-            Aún no tienes incidencias reportadas
+          <div className="text-center py-6 text-gray-400 text-sm">
+            Usa el botón de arriba para reportar tu primera incidencia
           </div>
         ) : (
           <div className="space-y-2">

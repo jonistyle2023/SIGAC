@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ClipboardCheck, Clock, CheckCircle, ChevronRight } from 'lucide-react';
+import { ClipboardCheck, Clock, CheckCircle, ChevronRight, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import incidenciaService from '../../services/incidencia.service';
 import { StatCard } from '../../components/ui/StatCard';
@@ -50,6 +50,20 @@ const EntidadDashboard = () => {
           <StatCard title="Resueltas" value={stats.resueltas} icon={CheckCircle} colorClass="bg-green-50 text-green-600" />
         </div>
       )}
+
+      {/* Guía de flujo */}
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex gap-3">
+        <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-blue-800 space-y-1">
+          <p className="font-semibold">¿Qué hago con las incidencias asignadas?</p>
+          <ol className="text-xs text-blue-700 space-y-0.5 list-none">
+            <li>1. Entra al detalle de una incidencia desde "Asignadas".</li>
+            <li>2. Revisa la descripción, fotos y ubicación del problema.</li>
+            <li>3. Una vez atendido, usa el botón <strong>"Marcar resuelta"</strong>.</li>
+            <li>4. Si no es de tu competencia, usa <strong>"Rechazar"</strong> con una explicación.</li>
+          </ol>
+        </div>
+      </div>
 
       <div>
         <div className="flex items-center justify-between mb-3">

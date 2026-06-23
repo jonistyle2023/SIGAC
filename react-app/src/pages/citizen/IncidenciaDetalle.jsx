@@ -20,7 +20,7 @@ const IncidenciaDetalle = () => {
   const [uploadingFiles, setUploadingFiles] = useState([]);
   const [deleting, setDeleting] = useState(false);
 
-  const fetch = () => {
+  const cargarIncidencia = () => {
     setLoading(true);
     incidenciaService.obtenerPorId(id)
       .then(res => setInc(res.data))
@@ -28,7 +28,7 @@ const IncidenciaDetalle = () => {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetch(); }, [id]);
+  useEffect(() => { cargarIncidencia(); }, [id]);
 
   const canEdit = inc?.estado === 'PENDIENTE';
 
@@ -65,11 +65,14 @@ const IncidenciaDetalle = () => {
       try {
         const { data: { presignedUrl, s3Key } } = await incidenciaService.generarUrlSubida(id, file.name, file.type);
 
-        await fetch(`${presignedUrl}`, {
+        const s3Response = await window.fetch(presignedUrl, {
           method: 'PUT',
           headers: { 'Content-Type': file.type },
           body: file,
         });
+        if (!s3Response.ok) {
+          throw new Error(`S3 rechazó el archivo (${s3Response.status})`);
+        }
 
         await incidenciaService.confirmarSubida(id, {
           s3Key,
@@ -85,7 +88,7 @@ const IncidenciaDetalle = () => {
         toast.error(`Error al subir ${file.name}`);
       }
     }
-    fetch();
+    cargarIncidencia();
     setTimeout(() => setUploadingFiles([]), 3000);
     e.target.value = '';
   };
@@ -95,7 +98,7 @@ const IncidenciaDetalle = () => {
     try {
       await incidenciaService.eliminarMultimedia(id, multimediaId);
       toast.success('Archivo eliminado');
-      fetch();
+      cargarIncidencia();
     } catch {
       toast.error('Error al eliminar el archivo');
     }
@@ -163,16 +166,34 @@ const IncidenciaDetalle = () => {
       {/* IA insight */}
       {inc.iaClasificado && (
         <div className={`rounded-2xl border p-4 ${inc.iaRazonRechazo ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-sm font-semibold text-gray-700">Análisis IA</span>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm font-semibold text-gray-700">Análisis de Inteligencia Artificial</span>
             <span className="text-xs bg-white border border-gray-200 text-gray-500 px-2 py-0.5 rounded-full">
-              {Math.round((inc.iaConfianza || 0) * 100)}% confianza
+              {Math.round((inc.iaConfianza || 0) * 100)}% certeza
             </span>
           </div>
-          {inc.iaResumen && <p className="text-sm text-gray-600">{inc.iaResumen}</p>}
+          <p className="text-xs text-gray-500 mb-2">
+            Nuestro sistema de IA analizó tu reporte automáticamente para ayudar a clasificarlo y priorizarlo.
+          </p>
+          {inc.iaResumen && <p className="text-sm text-gray-600 leading-relaxed">{inc.iaResumen}</p>}
           {inc.iaRazonRechazo && (
-            <p className="text-sm text-red-600 mt-1 font-medium">{inc.iaRazonRechazo}</p>
+            <div className="mt-2 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-600 font-medium">{inc.iaRazonRechazo}</p>
+            </div>
           )}
+        </div>
+      )}
+
+      {/* Estado actual — qué esperar */}
+      {!inc.iaRazonRechazo && inc.estado !== 'RESUELTO' && inc.estado !== 'RECHAZADO' && (
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+          <p className="text-xs font-semibold text-gray-600 mb-2">¿Qué pasa ahora con tu reporte?</p>
+          {{
+            PENDIENTE:   <p className="text-xs text-gray-500">Tu reporte fue recibido. Un administrador lo revisará pronto y lo asignará a la entidad que corresponda. No necesitas hacer nada más.</p>,
+            EN_REVISION: <p className="text-xs text-gray-500">Un administrador está revisando tu caso. En breve será asignado a la entidad responsable de atenderlo.</p>,
+            EN_PROCESO:  <p className="text-xs text-gray-500">La entidad responsable ya tiene tu reporte y está trabajando en solucionarlo. Mantente atento a cambios de estado.</p>,
+          }[inc.estado]}
         </div>
       )}
 

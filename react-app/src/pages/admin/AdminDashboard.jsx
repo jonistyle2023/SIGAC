@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ClipboardList, Clock, CheckCircle, XCircle, ChevronRight, Users } from 'lucide-react';
+import { ClipboardList, Clock, CheckCircle, XCircle, ChevronRight, Users, AlertCircle, Building2, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import incidenciaService from '../../services/incidencia.service';
 import { StatCard } from '../../components/ui/StatCard';
@@ -54,15 +54,42 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {/* Alerta de pendientes */}
+      {!loading && stats.pendientes > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">
+              {stats.pendientes} incidencia{stats.pendientes > 1 ? 's' : ''} pendiente{stats.pendientes > 1 ? 's' : ''} de revisión
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Revísalas, asígnalas a la entidad correcta y cambia el estado a <strong>En Revisión</strong>.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
         <Link to="/admin/incidencias" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2 hover:border-blue-200 transition-colors">
           <ClipboardList className="h-6 w-6 text-blue-600" />
           <span className="text-sm font-semibold text-gray-800">Ver incidencias</span>
+          <span className="text-xs text-gray-400">Revisar, asignar y gestionar estados</span>
         </Link>
         <Link to="/admin/usuarios" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2 hover:border-blue-200 transition-colors">
           <Users className="h-6 w-6 text-purple-600" />
           <span className="text-sm font-semibold text-gray-800">Gestionar usuarios</span>
+          <span className="text-xs text-gray-400">Roles, activar o desactivar cuentas</span>
+        </Link>
+        <Link to="/admin/entidades" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2 hover:border-blue-200 transition-colors">
+          <Building2 className="h-6 w-6 text-green-600" />
+          <span className="text-sm font-semibold text-gray-800">Entidades</span>
+          <span className="text-xs text-gray-400">Bomberos, policía, municipio, etc.</span>
+        </Link>
+        <Link to="/admin/auditoria" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2 hover:border-blue-200 transition-colors">
+          <Shield className="h-6 w-6 text-slate-600" />
+          <span className="text-sm font-semibold text-gray-800">Auditoría</span>
+          <span className="text-xs text-gray-400">Registro de todas las acciones</span>
         </Link>
       </div>
 

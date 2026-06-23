@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, ChevronRight, FileX } from 'lucide-react';
+import { PlusCircle, ChevronRight, FileX, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import incidenciaService from '../../services/incidencia.service';
 import { StatusBadge, CategoryBadge } from '../../components/ui/StatusBadge';
@@ -17,6 +17,14 @@ const ESTADOS = [
   { value: 'RECHAZADO',   label: 'Rechazado' },
 ];
 
+const ESTADO_INFO = [
+  { label: 'Pendiente',   color: 'bg-amber-100 text-amber-800',  desc: 'Tu reporte llegó. Está en cola esperando que un administrador lo revise.' },
+  { label: 'En Revisión', color: 'bg-blue-100 text-blue-800',    desc: 'Un administrador está evaluando tu caso para asignarlo a la entidad correcta.' },
+  { label: 'En Proceso',  color: 'bg-orange-100 text-orange-800', desc: 'La entidad responsable ya recibió el caso y está trabajando en resolverlo.' },
+  { label: 'Resuelto',    color: 'bg-green-100 text-green-800',  desc: 'El problema fue atendido. ¡Gracias por tu reporte!' },
+  { label: 'Rechazado',   color: 'bg-red-100 text-red-800',      desc: 'El reporte no pudo procesarse. Abre el detalle para ver el motivo.' },
+];
+
 const MisIncidencias = () => {
   const [incidencias, setIncidencias] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +32,7 @@ const MisIncidencias = () => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
+  const [showLeyenda, setShowLeyenda] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -56,6 +65,30 @@ const MisIncidencias = () => {
           <PlusCircle className="h-4 w-4" />
           Nueva
         </Link>
+      </div>
+
+      {/* Leyenda de estados */}
+      <div className="bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden">
+        <button
+          onClick={() => setShowLeyenda(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <span className="flex items-center gap-1.5">
+            <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
+            ¿Qué significa cada estado?
+          </span>
+          {showLeyenda ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+        </button>
+        {showLeyenda && (
+          <div className="px-4 pb-3 space-y-2">
+            {ESTADO_INFO.map(e => (
+              <div key={e.label} className="flex items-start gap-2">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${e.color}`}>{e.label}</span>
+                <p className="text-xs text-gray-500">{e.desc}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Filtros */}

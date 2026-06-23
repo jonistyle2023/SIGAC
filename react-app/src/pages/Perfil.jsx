@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Lock, Save, Loader2, IdCard } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Lock, Save, Loader2, IdCard, Eye, EyeOff, CheckCircle, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import usuarioService from '../services/usuario.service';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -18,6 +18,14 @@ const Field = ({ label, icon: Icon, children }) => (
 );
 
 const inputClass = 'block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all';
+const pwInputClass = 'block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all';
+
+const PwCheck = ({ ok, label }) => (
+  <span className={`flex items-center gap-1 text-xs font-medium ${ok ? 'text-green-600' : 'text-gray-400'}`}>
+    {ok ? <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" /> : <X className="h-3.5 w-3.5 flex-shrink-0" />}
+    {label}
+  </span>
+);
 
 const Perfil = () => {
   const [perfil, setPerfil] = useState(null);
@@ -26,6 +34,9 @@ const Perfil = () => {
   const [changingPass, setChangingPass] = useState(false);
   const [profileForm, setProfileForm] = useState({ nombre: '', apellido: '', telefono: '', direccion: '' });
   const [passForm, setPassForm] = useState({ passwordActual: '', passwordNueva: '', confirmPasswordNueva: '' });
+  const [showActual, setShowActual] = useState(false);
+  const [showNueva, setShowNueva] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     usuarioService.obtenerPerfil()
@@ -58,6 +69,12 @@ const Perfil = () => {
 
   const handlePassChange = async (e) => {
     e.preventDefault();
+    const pw = passForm.passwordNueva;
+    const strong = pw.length >= 8 && /[a-zA-Z]/.test(pw) && /[0-9!@#$%^&*()\-_+=.,;:'"<>?/\\[\]{}|`~]/.test(pw);
+    if (!strong) {
+      toast.error('La nueva contraseña no cumple los requisitos mínimos');
+      return;
+    }
     if (passForm.passwordNueva !== passForm.confirmPasswordNueva) {
       toast.error('Las contraseñas nuevas no coinciden');
       return;
@@ -160,23 +177,106 @@ const Perfil = () => {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <h2 className="text-base font-semibold text-gray-800 mb-4">Cambiar Contraseña</h2>
         <form onSubmit={handlePassChange} className="space-y-4">
-          {['passwordActual', 'passwordNueva', 'confirmPasswordNueva'].map((field, i) => (
-            <Field
-              key={field}
-              label={['Contraseña actual', 'Nueva contraseña', 'Confirmar nueva contraseña'][i]}
-              icon={Lock}
-            >
+
+          {/* Contraseña actual */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Contraseña actual</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <Lock className="h-4 w-4 text-gray-400" />
+              </div>
               <input
-                type="password"
-                className={inputClass}
-                value={passForm[field]}
-                onChange={e => setPassForm(p => ({ ...p, [field]: e.target.value }))}
-                placeholder="••••••••"
+                type={showActual ? 'text' : 'password'}
+                className={pwInputClass}
+                value={passForm.passwordActual}
+                onChange={e => setPassForm(p => ({ ...p, passwordActual: e.target.value }))}
+                placeholder="Tu contraseña actual"
                 required
-                minLength={field === 'passwordActual' ? 1 : 8}
               />
-            </Field>
-          ))}
+              <button
+                type="button"
+                onClick={() => setShowActual(v => !v)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                tabIndex={-1}
+                aria-label={showActual ? 'Ocultar' : 'Ver'}
+              >
+                {showActual ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Nueva contraseña */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nueva contraseña</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <Lock className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type={showNueva ? 'text' : 'password'}
+                className={pwInputClass}
+                value={passForm.passwordNueva}
+                onChange={e => setPassForm(p => ({ ...p, passwordNueva: e.target.value }))}
+                placeholder="Mínimo 8 caracteres"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowNueva(v => !v)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                tabIndex={-1}
+                aria-label={showNueva ? 'Ocultar' : 'Ver'}
+              >
+                {showNueva ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            {passForm.passwordNueva.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1">
+                <PwCheck ok={passForm.passwordNueva.length >= 8}                                                                    label="8 caracteres" />
+                <PwCheck ok={/[a-zA-Z]/.test(passForm.passwordNueva)}                                                              label="Una letra" />
+                <PwCheck ok={/[0-9!@#$%^&*()\-_+=.,;:'"<>?/\\[\]{}|`~]/.test(passForm.passwordNueva)} label="Un número o símbolo" />
+              </div>
+            )}
+          </div>
+
+          {/* Confirmar nueva contraseña */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Confirmar nueva contraseña</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <Lock className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type={showConfirm ? 'text' : 'password'}
+                className={`${pwInputClass} ${
+                  passForm.confirmPasswordNueva.length > 0
+                    ? passForm.passwordNueva === passForm.confirmPasswordNueva
+                      ? 'border-green-300 focus:ring-green-400'
+                      : 'border-red-300 focus:ring-red-400'
+                    : ''
+                }`}
+                value={passForm.confirmPasswordNueva}
+                onChange={e => setPassForm(p => ({ ...p, confirmPasswordNueva: e.target.value }))}
+                placeholder="Repite la nueva contraseña"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(v => !v)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                tabIndex={-1}
+                aria-label={showConfirm ? 'Ocultar' : 'Ver'}
+              >
+                {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            {passForm.confirmPasswordNueva.length > 0 && (
+              passForm.passwordNueva === passForm.confirmPasswordNueva
+                ? <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Las contraseñas coinciden</p>
+                : <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><X className="h-3 w-3" /> Las contraseñas no coinciden</p>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={changingPass}

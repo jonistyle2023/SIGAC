@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, UserCheck, UserX, ChevronDown, Loader2 } from 'lucide-react';
+import { Search, UserCheck, UserX, ChevronDown, Loader2, HelpCircle, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import usuarioService from '../../services/usuario.service';
 import { RoleBadge } from '../../components/ui/StatusBadge';
@@ -8,6 +8,12 @@ import { EmptyState } from '../../components/ui/EmptyState';
 
 const ROLES = ['CIUDADANO', 'ADMINISTRADOR', 'ENTIDAD_PUBLICA'];
 
+const ROL_INFO = [
+  { rol: 'CIUDADANO',       color: 'bg-indigo-100 text-indigo-700', desc: 'Puede reportar incidencias y ver el estado de sus propios reportes.' },
+  { rol: 'ENTIDAD PÚBLICA', color: 'bg-purple-100 text-purple-700', desc: 'Funcionario asignado a una entidad. Puede ver y resolver incidencias de su entidad.' },
+  { rol: 'ADMINISTRADOR',   color: 'bg-red-100 text-red-700',       desc: 'Acceso total. Revisa, asigna y gestiona todas las incidencias y usuarios. Máximo 3.' },
+];
+
 const Usuarios = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -15,6 +21,7 @@ const Usuarios = () => {
   const [search, setSearch] = useState('');
   const [rolFiltro, setRolFiltro] = useState('');
   const [pendingAction, setPendingAction] = useState(null);
+  const [showRoles, setShowRoles] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -68,6 +75,31 @@ const Usuarios = () => {
       <div>
         <h1 className="text-xl font-bold text-gray-900">Usuarios</h1>
         <p className="text-xs text-gray-400 mt-0.5">{usuarios.length} en total</p>
+      </div>
+
+      {/* Guía de roles */}
+      <div className="bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden">
+        <button
+          onClick={() => setShowRoles(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <span className="flex items-center gap-1.5">
+            <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
+            ¿Qué puede hacer cada rol?
+          </span>
+          {showRoles ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+        </button>
+        {showRoles && (
+          <div className="px-4 pb-3 space-y-2">
+            {ROL_INFO.map(r => (
+              <div key={r.rol} className="flex items-start gap-2">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${r.color}`}>{r.rol}</span>
+                <p className="text-xs text-gray-500">{r.desc}</p>
+              </div>
+            ))}
+            <p className="text-xs text-gray-400 pt-1">Cambia el rol usando el selector en cada tarjeta de usuario. El cambio es inmediato.</p>
+          </div>
+        )}
       </div>
 
       {/* Búsqueda + filtro */}
