@@ -110,46 +110,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ secrets.AWS_REGION }}
 
-      - name: Configure S3 multimedia bucket CORS
-        run: |
-          aws s3api put-bucket-cors \
-            --bucket ${{ secrets.S3_BUCKET_MULTIMEDIA }} \
-            --cors-configuration '{
-              "CORSRules": [{
-                "AllowedHeaders": ["*"],
-                "AllowedMethods": ["PUT", "GET", "HEAD"],
-                "AllowedOrigins": ["https://${{ secrets.CLOUDFRONT_DOMAIN }}"],
-                "ExposeHeaders": ["ETag"],
-                "MaxAgeSeconds": 3000
-              }]
-            }'
-
-      - name: Configure CloudFront SPA error pages
-        run: |
-          ETAG=$(aws cloudfront get-distribution-config \
-            --id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --query 'ETag' --output text)
-          CONFIG=$(aws cloudfront get-distribution-config \
-            --id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --query 'DistributionConfig' --output json)
-          UPDATED=$(echo "$CONFIG" | python3 -c "
-          import json, sys
-          cfg = json.load(sys.stdin)
-          cfg['CustomErrorResponses'] = {
-            'Quantity': 2,
-            'Items': [
-              {'ErrorCode': 403, 'ResponsePagePath': '/index.html', 'ResponseCode': '200', 'ErrorCachingMinTTL': 0},
-              {'ErrorCode': 404, 'ResponsePagePath': '/index.html', 'ResponseCode': '200', 'ErrorCachingMinTTL': 0}
-            ]
-          }
-          print(json.dumps(cfg))
-          ")
-          aws cloudfront update-distribution \
-            --id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --if-match "$ETAG" \
-            --distribution-config "$UPDATED" \
-            --query 'Distribution.Id' --output text || echo "CloudFront already configured"
-
       - name: Sync to S3
         run: |
           aws s3 sync react-app/dist/ s3://${{ secrets.S3_BUCKET_FRONTEND }}/ \
