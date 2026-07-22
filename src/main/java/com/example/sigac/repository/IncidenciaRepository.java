@@ -9,6 +9,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Repository
 public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
 
@@ -26,4 +29,6 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
 
     @Query("SELECT COUNT(i) FROM Incidencia i WHERE i.ciudadano.id = :ciudadanoId")
     long countByCiudadanoId(@Param("ciudadanoId") Long ciudadanoId);
+
+    List<Incidencia> findByFechaCreacionBetweenOrderByFechaCreacionDesc(LocalDateTime desde, LocalDateTime hasta);
 }

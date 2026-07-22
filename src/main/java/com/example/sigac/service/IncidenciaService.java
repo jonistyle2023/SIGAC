@@ -14,7 +14,9 @@ import com.example.sigac.repository.EntidadRepository;
 import com.example.sigac.repository.IncidenciaMultimediaRepository;
 import com.example.sigac.repository.IncidenciaRepository;
 import com.example.sigac.repository.UsuarioRepository;
+import com.example.sigac.event.IncidenciaAsignadaEvent;
 import com.example.sigac.event.IncidenciaCreatedEvent;
+import com.example.sigac.event.IncidenciaEstadoCambiadoEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -169,6 +171,9 @@ public class IncidenciaService {
                 estadoAnterior.name(), guardada.getEstado().name(),
                 actor.getId(), actor.getEmail(), actor.getRol().name());
 
+        eventPublisher.publishEvent(new IncidenciaEstadoCambiadoEvent(guardada.getId(), guardada.getCiudadano().getId(),
+                guardada.getTitulo(), estadoAnterior.name(), guardada.getEstado().name()));
+
         log.info("Estado de incidencia {} cambiado de {} a {} por {}",
                 guardada.getId(), estadoAnterior, guardada.getEstado(), actor.getEmail());
         return convertToDTO(guardada);
@@ -200,6 +205,9 @@ public class IncidenciaService {
                 entidadAnteriorId != null ? "entidad=" + entidadAnteriorId : null,
                 "entidad=" + entidad.getId() + "(" + entidad.getNombre() + ")",
                 actor.getId(), actor.getEmail(), actor.getRol().name());
+
+        eventPublisher.publishEvent(new IncidenciaAsignadaEvent(guardada.getId(), entidad.getId(),
+                guardada.getTitulo(), entidad.getNombre()));
 
         log.info("Incidencia {} asignada a entidad {}({}) por {}",
                 guardada.getId(), entidad.getNombre(), entidad.getId(), actor.getEmail());

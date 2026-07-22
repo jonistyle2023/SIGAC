@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, PlusCircle, FileText, Users,
-  Shield, ClipboardList, X, LogOut, ClipboardCheck, Building2,
+  Shield, ClipboardList, X, LogOut, ClipboardCheck, Building2, BarChart3,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -9,13 +9,14 @@ const NAV = {
   CIUDADANO: [
     { to: '/dashboard',             icon: LayoutDashboard, label: 'Inicio' },
     { to: '/mis-incidencias/nueva', icon: PlusCircle,      label: 'Reportar Incidencia' },
-    { to: '/mis-incidencias',       icon: FileText,        label: 'Mis Incidencias' },
+    { to: '/mis-incidencias',       icon: FileText,        label: 'Mis Incidencias', end: true },
   ],
   ADMINISTRADOR: [
     { to: '/dashboard',         icon: LayoutDashboard, label: 'Inicio' },
     { to: '/admin/incidencias', icon: ClipboardList,   label: 'Incidencias' },
     { to: '/admin/entidades',   icon: Building2,       label: 'Entidades' },
     { to: '/admin/usuarios',    icon: Users,           label: 'Usuarios' },
+    { to: '/admin/reportes',    icon: BarChart3,       label: 'Reportes' },
     { to: '/admin/auditoria',   icon: Shield,          label: 'Auditoría' },
   ],
   ENTIDAD_PUBLICA: [
@@ -24,9 +25,10 @@ const NAV = {
   ],
 };
 
-const SidebarLink = ({ to, icon: Icon, label, onClick }) => (
+const SidebarLink = ({ to, icon: Icon, label, onClick, end }) => (
   <NavLink
     to={to}
+    end={end}
     onClick={onClick}
     className={({ isActive }) =>
       `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${

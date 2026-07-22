@@ -6,16 +6,16 @@ const Landing = () => {
     return (
         <div className="min-h-screen bg-white">
             {/* Navigation */}
-            <nav className="flex items-center justify-between px-8 py-6 bg-white border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                    <div className="bg-blue-600 p-2 rounded-lg">
-                        <Shield className="text-white w-6 h-6" />
+            <nav className="flex items-center justify-between px-4 sm:px-8 py-4 sm:py-6 bg-white border-b border-gray-100 gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="bg-blue-600 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
+                        <Shield className="text-white w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <span className="text-2xl font-bold text-gray-900 tracking-tight">SIGAC</span>
+                    <span className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight truncate">SIGAC</span>
                 </div>
-                <div className="flex items-center gap-6">
-                    <Link to="/login" className="text-gray-600 font-medium hover:text-blue-600 transition-colors">Iniciar Sesión</Link>
-                    <Link to="/register" className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                <div className="flex items-center gap-2 sm:gap-6 flex-shrink-0">
+                    <Link to="/login" className="text-sm sm:text-base text-gray-600 font-medium hover:text-blue-600 transition-colors whitespace-nowrap">Iniciar Sesión</Link>
+                    <Link to="/register" className="bg-blue-600 text-white px-3.5 sm:px-6 py-2 sm:py-2.5 rounded-full font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 text-sm sm:text-base whitespace-nowrap">
                         Registrarse
                     </Link>
                 </div>

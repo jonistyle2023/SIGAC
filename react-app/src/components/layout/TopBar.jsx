@@ -1,13 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Bell, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import notificacionService from '../../services/notificacion.service';
 
 const ROLE_LABELS = {
   CIUDADANO: 'Ciudadano',
   ADMINISTRADOR: 'Administrador',
   ENTIDAD_PUBLICA: 'Entidad Pública',
 };
+
+const INCIDENCIA_RUTA_POR_ROL = {
+  CIUDADANO: (id) => `/mis-incidencias/${id}`,
+  ADMINISTRADOR: (id) => `/admin/incidencias/${id}`,
+  ENTIDAD_PUBLICA: (id) => `/entidad/incidencias/${id}`,
+};
+
+const NOTIFICACIONES_POLL_MS = 30000;
 
 const DAYS   = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -17,11 +26,29 @@ const formatDate = () => {
   return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 };
 
+const formatRelativo = (isoString) => {
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  const minutos = Math.floor(diffMs / 60000);
+  if (minutos < 1) return 'ahora';
+  if (minutos < 60) return `hace ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `hace ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  return `hace ${dias} d`;
+};
+
 const TopBar = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(formatDate);
   const dropdownRef = useRef(null);
+
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [noLeidas, setNoLeidas] = useState(0);
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const notifRef = useRef(null);
 
   // Actualiza la fecha a medianoche
   useEffect(() => {
@@ -44,6 +71,71 @@ const TopBar = ({ onMenuClick }) => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
+
+  // Cierra el dropdown de notificaciones al hacer clic fuera
+  useEffect(() => {
+    if (!notifOpen) return;
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [notifOpen]);
+
+  // Contador de no leídas — carga inicial y sondeo periódico
+  useEffect(() => {
+    const cargarContador = async () => {
+      try {
+        const { data } = await notificacionService.contarNoLeidas();
+        setNoLeidas(data.noLeidas);
+      } catch {
+        // Silencioso: el contador no es crítico para el uso de la app
+      }
+    };
+    cargarContador();
+    const interval = setInterval(cargarContador, NOTIFICACIONES_POLL_MS);
+    return () => clearInterval(interval);
+  }, []);
+
+  const toggleNotificaciones = async () => {
+    const abriendo = !notifOpen;
+    setNotifOpen(abriendo);
+    if (abriendo) {
+      setNotifLoading(true);
+      try {
+        const { data } = await notificacionService.obtenerMisNotificaciones(0, 10);
+        setNotificaciones(data.content);
+      } catch {
+        setNotificaciones([]);
+      } finally {
+        setNotifLoading(false);
+      }
+    }
+  };
+
+  const handleNotificacionClick = async (notif) => {
+    setNotifOpen(false);
+    if (!notif.leida) {
+      setNoLeidas((n) => Math.max(0, n - 1));
+      setNotificaciones((prev) => prev.map((n) => (n.id === notif.id ? { ...n, leida: true } : n)));
+      notificacionService.marcarLeida(notif.id).catch(() => {});
+    }
+    if (notif.incidenciaId && INCIDENCIA_RUTA_POR_ROL[user?.rol]) {
+      navigate(INCIDENCIA_RUTA_POR_ROL[user.rol](notif.incidenciaId));
+    }
+  };
+
+  const handleMarcarTodas = async () => {
+    setNoLeidas(0);
+    setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+    try {
+      await notificacionService.marcarTodasLeidas();
+    } catch {
+      // El próximo sondeo restaura el contador real si algo falló
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 md:left-64 z-20 h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3">
@@ -73,9 +165,65 @@ const TopBar = ({ onMenuClick }) => {
         </span>
 
         {/* Campana */}
-        <button className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition-colors relative">
-          <Bell className="h-5 w-5" />
-        </button>
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={toggleNotificaciones}
+            className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition-colors relative"
+            aria-label="Notificaciones"
+          >
+            <Bell className="h-5 w-5" />
+            {noLeidas > 0 && (
+              <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+                {noLeidas > 9 ? '9+' : noLeidas}
+              </span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <div className="absolute right-0 mt-1 w-80 max-w-[90vw] bg-white rounded-2xl shadow-lg border border-gray-100 py-1 z-50">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
+                <span className="text-sm font-semibold text-gray-800">Notificaciones</span>
+                {noLeidas > 0 && (
+                  <button
+                    onClick={handleMarcarTodas}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    Marcar todas como leídas
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-96 overflow-y-auto">
+                {notifLoading ? (
+                  <div className="py-8 text-center text-sm text-gray-400">Cargando...</div>
+                ) : notificaciones.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-gray-400">Sin notificaciones</div>
+                ) : (
+                  notificaciones.map((notif) => (
+                    <button
+                      key={notif.id}
+                      onClick={() => handleNotificacionClick(notif)}
+                      className={`w-full text-left px-4 py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors flex gap-2 ${
+                        !notif.leida ? 'bg-blue-50/60' : ''
+                      }`}
+                    >
+                      <span
+                        className={`mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 ${
+                          !notif.leida ? 'bg-blue-600' : 'bg-transparent'
+                        }`}
+                      />
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm font-medium text-gray-800 truncate">{notif.titulo}</span>
+                        <span className="block text-xs text-gray-500 line-clamp-2">{notif.mensaje}</span>
+                        <span className="block text-[11px] text-gray-400 mt-0.5">{formatRelativo(notif.fechaCreacion)}</span>
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Separador */}
         <div className="hidden sm:block w-px h-5 bg-gray-200" />
