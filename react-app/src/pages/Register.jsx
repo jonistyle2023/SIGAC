@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     Shield, Mail, Lock, User, IdCard, Phone, MapPin,
     AlertCircle, Loader2, Info, CheckCircle, Eye, EyeOff, X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getErrorDetails, getErrorMessage } from '../utils/errors';
 
 const fieldClass = 'block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all';
 const labelClass = 'block text-sm font-semibold text-gray-700 mb-1';
@@ -26,6 +27,7 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { register } = useAuth();
@@ -33,23 +35,38 @@ const Register = () => {
 
     const set = (field) => (e) => setFormData(p => ({ ...p, [field]: e.target.value }));
 
+    const setCedula = (e) => {
+        const soloDigitos = e.target.value.replace(/\D/g, '');
+        setFormData(p => ({ ...p, cedula: soloDigitos }));
+    };
+
     const pw = formData.password;
     const pwChecks = {
-        length:        pw.length >= 8,
-        letter:        /[a-zA-Z]/.test(pw),
-        numberOrSymbol:/[0-9!@#$%^&*()\-_+=.,;:'"<>?/\\[\]{}|`~]/.test(pw),
+        length:  pw.length >= 8,
+        lower:   /[a-z]/.test(pw),
+        upper:   /[A-Z]/.test(pw),
+        digit:   /[0-9]/.test(pw),
+        special: /[^A-Za-z0-9]/.test(pw),
     };
     const pwStrong  = Object.values(pwChecks).every(Boolean);
     const pwTouched = pw.length > 0;
     const confirmOk = formData.confirmPassword.length > 0 && pw === formData.confirmPassword;
     const confirmBad = formData.confirmPassword.length > 0 && pw !== formData.confirmPassword;
 
+    const cedulaTouched = formData.cedula.length > 0;
+    const cedulaValid = /^[0-9]{6,20}$/.test(formData.cedula);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setFieldErrors([]);
 
+        if (!cedulaValid) {
+            setError('La cédula debe contener solo números, entre 6 y 20 dígitos.');
+            return;
+        }
         if (!pwStrong) {
-            setError('La contraseña no cumple los requisitos mínimos de seguridad.');
+            setError('La contraseña no cumple los requisitos mínimos de seguridad (revisa la lista debajo del campo).');
             return;
         }
         if (formData.password !== formData.confirmPassword) {
@@ -62,7 +79,13 @@ const Register = () => {
             await register(formData);
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || 'Error en el registro. Verifica los datos.');
+            const details = getErrorDetails(err);
+            if (details) {
+                setError('Revisa estos datos antes de continuar:');
+                setFieldErrors(details);
+            } else {
+                setError(getErrorMessage(err, 'Error en el registro. Verifica los datos.'));
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -106,7 +129,14 @@ const Register = () => {
                         {error && (
                             <div className="bg-red-50 border-l-4 border-red-500 p-3.5 rounded-xl flex items-start gap-3">
                                 <AlertCircle className="text-red-500 w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <p className="text-sm text-red-700 font-medium">{error}</p>
+                                <div className="text-sm text-red-700">
+                                    <p className="font-medium">{error}</p>
+                                    {fieldErrors.length > 0 && (
+                                        <ul className="mt-1 list-disc list-inside space-y-0.5">
+                                            {fieldErrors.map((msg, i) => <li key={i}>{msg}</li>)}
+                                        </ul>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -115,11 +145,14 @@ const Register = () => {
                             <label className={labelClass}>Cédula de identidad</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><IdCard className="h-4.5 w-4.5 text-gray-400" /></div>
-                                <input name="cedula" type="text" required inputMode="numeric" maxLength={10}
-                                    onChange={set('cedula')} value={formData.cedula}
-                                    className={fieldClass} placeholder="Ej: 0901234567" />
+                                <input name="cedula" type="text" required inputMode="numeric" maxLength={20}
+                                    onChange={setCedula} value={formData.cedula}
+                                    className={`${fieldClass} ${cedulaTouched && !cedulaValid ? 'border-red-300 focus:ring-red-400' : ''}`}
+                                    placeholder="Ej: 0901234567" />
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">10 dígitos, sin guiones ni espacios</p>
+                            {cedulaTouched && !cedulaValid
+                                ? <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><X className="h-3 w-3" /> Debe tener entre 6 y 20 dígitos, solo números</p>
+                                : <p className="text-xs text-gray-400 mt-1">Solo números, sin guiones ni espacios</p>}
                         </div>
 
                         {/* ── Nombre + Apellido ── */}
@@ -209,9 +242,11 @@ const Register = () => {
                             {/* Requisitos */}
                             {pwTouched && (
                                 <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1">
-                                    <Check ok={pwChecks.length}        label="8 caracteres" />
-                                    <Check ok={pwChecks.letter}        label="Una letra" />
-                                    <Check ok={pwChecks.numberOrSymbol} label="Un número o símbolo" />
+                                    <Check ok={pwChecks.length}  label="8 caracteres" />
+                                    <Check ok={pwChecks.lower}   label="Una minúscula" />
+                                    <Check ok={pwChecks.upper}   label="Una mayúscula" />
+                                    <Check ok={pwChecks.digit}   label="Un número" />
+                                    <Check ok={pwChecks.special} label="Un carácter especial" />
                                 </div>
                             )}
                         </div>

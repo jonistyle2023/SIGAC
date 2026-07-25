@@ -5,6 +5,7 @@ import usuarioService from '../../services/usuario.service';
 import { RoleBadge } from '../../components/ui/StatusBadge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { getErrorMessage } from '../../utils/errors';
 
 const ROLES = ['CIUDADANO', 'ADMINISTRADOR', 'ENTIDAD_PUBLICA'];
 
@@ -51,7 +52,7 @@ const Usuarios = () => {
       toast.success(`Usuario ${action === 'activar' ? 'activado' : 'desactivado'}`);
       load();
     } catch (err) {
-      toast.error(err.response?.data?.message || `Error al ${action} usuario`);
+      toast.error(getErrorMessage(err, `Error al ${action} usuario`));
     } finally {
       setPendingAction(null);
     }
@@ -64,7 +65,7 @@ const Usuarios = () => {
       toast.success('Rol actualizado');
       load();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al cambiar rol');
+      toast.error(getErrorMessage(err, 'Error al cambiar rol'));
     } finally {
       setPendingAction(null);
     }

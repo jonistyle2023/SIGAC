@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, MapPin, Calendar, Tag, AlertTriangle,
-  Trash2, Edit3, Upload, X, Loader2, Image, CheckCircle,
+  Trash2, Upload, X, Loader2, Image, CheckCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import incidenciaService from '../../services/incidencia.service';
 import { StatusBadge, CategoryBadge, PriorityBadge } from '../../components/ui/StatusBadge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { getErrorMessage } from '../../utils/errors';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/quicktime', 'application/pdf'];
 
@@ -40,7 +41,7 @@ const IncidenciaDetalle = () => {
       toast.success('Incidencia eliminada');
       navigate('/mis-incidencias');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al eliminar');
+      toast.error(getErrorMessage(err, 'Error al eliminar'));
       setDeleting(false);
     }
   };

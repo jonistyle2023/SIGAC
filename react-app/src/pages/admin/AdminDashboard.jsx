@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ClipboardList, Clock, CheckCircle, XCircle, ChevronRight, Users, AlertCircle, Building2, Shield } from 'lucide-react';
+import { ClipboardList, Clock, CheckCircle, ChevronRight, Users, AlertCircle, Building2, Shield, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import incidenciaService from '../../services/incidencia.service';
 import { StatCard } from '../../components/ui/StatCard';
@@ -85,6 +85,11 @@ const AdminDashboard = () => {
           <Building2 className="h-6 w-6 text-green-600" />
           <span className="text-sm font-semibold text-gray-800">Entidades</span>
           <span className="text-xs text-gray-400">Bomberos, policía, municipio, etc.</span>
+        </Link>
+        <Link to="/admin/reportes" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2 hover:border-blue-200 transition-colors">
+          <BarChart3 className="h-6 w-6 text-indigo-600" />
+          <span className="text-sm font-semibold text-gray-800">Reportes</span>
+          <span className="text-xs text-gray-400">KPIs y exportación de incidencias</span>
         </Link>
         <Link to="/admin/auditoria" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2 hover:border-blue-200 transition-colors">
           <Shield className="h-6 w-6 text-slate-600" />

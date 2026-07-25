@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ClipboardList, Clock, Tag, FileDown, FileSpreadsheet, FileText } from 'lucide-react';
+import toast from 'react-hot-toast';
 import reporteService from '../../services/reporte.service';
 import { StatCard } from '../../components/ui/StatCard';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { getErrorMessage } from '../../utils/errors';
 
 // Paleta categórica validada (orden fijo — ver skill de dataviz) aplicada
 // en el orden en que se declaran las categorías, no por asociación semántica.
@@ -88,8 +90,8 @@ const Reportes = () => {
     try {
       const response = await reporteService.exportar(formato, filtros);
       descargarBlob(response);
-    } catch {
-      // Silencioso: el usuario puede reintentar
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Error al exportar el reporte'));
     } finally {
       setExportando(null);
     }

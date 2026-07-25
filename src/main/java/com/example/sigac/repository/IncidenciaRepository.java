@@ -30,5 +30,13 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
     @Query("SELECT COUNT(i) FROM Incidencia i WHERE i.ciudadano.id = :ciudadanoId")
     long countByCiudadanoId(@Param("ciudadanoId") Long ciudadanoId);
 
-    List<Incidencia> findByFechaCreacionBetweenOrderByFechaCreacionDesc(LocalDateTime desde, LocalDateTime hasta);
+    // JOIN FETCH evita el N+1 en el reporte: sin esto, extraerFila()/obtenerKpis() disparan una
+    // query extra por incidencia al acceder a ciudadano/entidadAsignada (FetchType.LAZY).
+    @Query("SELECT i FROM Incidencia i " +
+            "LEFT JOIN FETCH i.ciudadano " +
+            "LEFT JOIN FETCH i.entidadAsignada " +
+            "WHERE i.fechaCreacion BETWEEN :desde AND :hasta " +
+            "ORDER BY i.fechaCreacion DESC")
+    List<Incidencia> findByFechaCreacionBetweenOrderByFechaCreacionDesc(
+            @Param("desde") LocalDateTime desde, @Param("hasta") LocalDateTime hasta);
 }

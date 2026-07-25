@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Plus, Building2, Phone, Mail, Users, Pencil, Trash2, ToggleLeft, ToggleRight, Loader2, X, ChevronDown } from 'lucide-react';
+import { Plus, Building2, Phone, Mail, Users, Pencil, Trash2, ToggleLeft, ToggleRight, Loader2, X, ChevronDown, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import entidadService from '../../services/entidad.service';
 import api from '../../services/api';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { getErrorMessage } from '../../utils/errors';
 
 const TIPOS = ['BOMBEROS', 'POLICIA', 'TRANSITO', 'AMBULANCIA', 'MEDIO_AMBIENTE', 'OTRO'];
 
@@ -90,20 +91,47 @@ const Modal = ({ title, onClose, onSubmit, form, setForm, saving }) => {
   );
 };
 
+const FuncPwCheck = ({ ok, label }) => (
+  <span className={`flex items-center gap-1 text-xs font-medium ${ok ? 'text-green-600' : 'text-gray-400'}`}>
+    {ok ? <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" /> : <X className="h-3.5 w-3.5 flex-shrink-0" />}
+    {label}
+  </span>
+);
+
 const FuncionarioModal = ({ entidad, onClose }) => {
   const [form, setForm] = useState(EMPTY_FUNC);
   const [saving, setSaving] = useState(false);
   const inputClass = 'block w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500';
 
+  const pwChecks = {
+    length:  form.password.length >= 8,
+    lower:   /[a-z]/.test(form.password),
+    upper:   /[A-Z]/.test(form.password),
+    digit:   /[0-9]/.test(form.password),
+    special: /[^A-Za-z0-9]/.test(form.password),
+  };
+  const pwStrong = Object.values(pwChecks).every(Boolean);
+  const pwTouched = form.password.length > 0;
+  const confirmOk = form.confirmPassword.length > 0 && form.password === form.confirmPassword;
+  const confirmBad = form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!pwStrong) {
+      toast.error('La contraseña no cumple los requisitos mínimos (revisa la lista debajo del campo)');
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
     setSaving(true);
     try {
       await api.post('/auth/register-entidad', { ...form, entidadId: entidad.id });
       toast.success('Funcionario registrado correctamente');
       onClose();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al registrar funcionario');
+      toast.error(getErrorMessage(err, 'Error al registrar funcionario'));
     } finally {
       setSaving(false);
     }
@@ -150,10 +178,22 @@ const FuncionarioModal = ({ entidad, onClose }) => {
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Contraseña *</label>
             <input type="password" className={inputClass} placeholder="Mínimo 8 caracteres" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required />
+            {pwTouched && (
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                <FuncPwCheck ok={pwChecks.length}  label="8 caracteres" />
+                <FuncPwCheck ok={pwChecks.lower}   label="Una minúscula" />
+                <FuncPwCheck ok={pwChecks.upper}   label="Una mayúscula" />
+                <FuncPwCheck ok={pwChecks.digit}   label="Un número" />
+                <FuncPwCheck ok={pwChecks.special} label="Un carácter especial" />
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Confirmar contraseña *</label>
-            <input type="password" className={inputClass} placeholder="Repite la contraseña" value={form.confirmPassword} onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))} required />
+            <input type="password"
+              className={`${inputClass} ${confirmBad ? 'border-red-300 focus:ring-red-400' : confirmOk ? 'border-green-300 focus:ring-green-400' : ''}`}
+              placeholder="Repite la contraseña" value={form.confirmPassword} onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))} required />
+            {confirmBad && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><X className="h-3 w-3" /> Las contraseñas no coinciden</p>}
           </div>
 
           <div className="flex gap-2 pt-2">
@@ -220,7 +260,7 @@ const Entidades = () => {
       setShowModal(false);
       load();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al guardar');
+      toast.error(getErrorMessage(err, 'Error al guardar'));
     } finally {
       setSaving(false);
     }
@@ -233,7 +273,7 @@ const Entidades = () => {
       toast.success(entidad.activo ? 'Entidad desactivada' : 'Entidad activada');
       load();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al cambiar estado');
+      toast.error(getErrorMessage(err, 'Error al cambiar estado'));
     } finally {
       setPendingToggle(null);
     }
@@ -246,7 +286,7 @@ const Entidades = () => {
       toast.success('Entidad eliminada');
       load();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al eliminar');
+      toast.error(getErrorMessage(err, 'Error al eliminar'));
     }
   };
 
