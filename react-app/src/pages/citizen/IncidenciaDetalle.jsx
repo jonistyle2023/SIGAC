@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, MapPin, Calendar, Tag, AlertTriangle,
+  ArrowLeft, MapPin, Calendar, Tag, AlertTriangle, Sparkles,
   Trash2, Upload, X, Loader2, Image, CheckCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -165,8 +165,17 @@ const IncidenciaDetalle = () => {
       </div>
 
       {/* IA insight */}
-      {inc.iaClasificado && (
-        <div className={`rounded-2xl border p-4 ${inc.iaRazonRechazo ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
+      {inc.iaClasificado && inc.iaRazonRechazo && (
+        <div className="rounded-2xl border p-4 bg-amber-50 border-amber-200">
+          <div className="flex items-start gap-2">
+            <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-900 leading-relaxed">{inc.iaRazonRechazo}</p>
+          </div>
+        </div>
+      )}
+
+      {inc.iaClasificado && !inc.iaRazonRechazo && (
+        <div className="rounded-2xl border p-4 bg-blue-50 border-blue-200">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-sm font-semibold text-gray-700">Análisis de Inteligencia Artificial</span>
             <span className="text-xs bg-white border border-gray-200 text-gray-500 px-2 py-0.5 rounded-full">
@@ -177,12 +186,6 @@ const IncidenciaDetalle = () => {
             Nuestro sistema de IA analizó tu reporte automáticamente para ayudar a clasificarlo y priorizarlo.
           </p>
           {inc.iaResumen && <p className="text-sm text-gray-600 leading-relaxed">{inc.iaResumen}</p>}
-          {inc.iaRazonRechazo && (
-            <div className="mt-2 flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-600 font-medium">{inc.iaRazonRechazo}</p>
-            </div>
-          )}
         </div>
       )}
 

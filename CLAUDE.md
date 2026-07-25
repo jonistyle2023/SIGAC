@@ -118,7 +118,7 @@ CloudFront routes `/api/*` to the ALB (HTTP, port 80). All other paths serve the
 - **Auth & User Management** — done
 - **Incident Management** — done (CRUD, estado workflow, S3 multimedia)
 - **Audit Trail** — done (`audit_logs`, admin only)
-- **AI Classification** — done (Google Gemini, rule-based fallback)
+- **AI Classification** — done (Amazon Bedrock, Claude Haiku via Converse API; manual-review fallback on failure — no rule-based classifier)
 - **Assignment & Dispatch** — done (`entidades` table, manual assignment)
 - **Notifications** — not implemented
 - **Reports / Export** — not implemented

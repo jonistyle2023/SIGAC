@@ -116,6 +116,12 @@
             <artifactId>s3</artifactId>
         </dependency>
 
+        <!-- AWS SDK v2 - Bedrock Runtime para clasificación IA (Módulo 4) -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>bedrockruntime</artifactId>
+        </dependency>
+
         <!-- Módulo 7: Reportería - exportación XLSX y PDF -->
         <dependency>
             <groupId>org.apache.poi</groupId>
