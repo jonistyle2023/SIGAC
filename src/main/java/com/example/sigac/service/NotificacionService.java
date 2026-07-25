@@ -47,8 +47,8 @@ public class NotificacionService {
                     .usuario(ciudadano)
                     .tipo(TipoNotificacion.CAMBIO_ESTADO)
                     .titulo("Cambio de estado")
-                    .mensaje("Tu incidencia \"" + event.titulo() + "\" cambió de " + event.estadoAnterior()
-                            + " a " + event.estadoNuevo() + ".")
+                    .mensaje("Tu incidencia \"" + tituloODefault(event.titulo(), event.incidenciaId()) + "\" cambió de "
+                            + event.estadoAnterior() + " a " + event.estadoNuevo() + ".")
                     .incidencia(incidenciaRepository.getReferenceById(event.incidenciaId()))
                     .build();
 
@@ -73,7 +73,8 @@ public class NotificacionService {
                         .usuario(destinatario)
                         .tipo(TipoNotificacion.ASIGNACION)
                         .titulo("Nueva incidencia asignada")
-                        .mensaje("La incidencia \"" + event.titulo() + "\" fue asignada a " + event.entidadNombre() + ".")
+                        .mensaje("La incidencia \"" + tituloODefault(event.titulo(), event.incidenciaId())
+                                + "\" fue asignada a " + event.entidadNombre() + ".")
                         .incidencia(incidenciaRef)
                         .build();
                 notificacionRepository.save(notificacion);
@@ -84,6 +85,11 @@ public class NotificacionService {
             log.error("Error al generar notificación de asignación, incidencia {}: {}",
                     event.incidenciaId(), e.getMessage());
         }
+    }
+
+    // La incidencia puede no tener título todavía (foto sin clasificar por IA).
+    private String tituloODefault(String titulo, Long incidenciaId) {
+        return (titulo != null && !titulo.isBlank()) ? titulo : "Reporte #" + incidenciaId;
     }
 
     // ─── Consultas y acciones del usuario autenticado ────────────────────────

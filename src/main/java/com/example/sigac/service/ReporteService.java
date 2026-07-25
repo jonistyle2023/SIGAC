@@ -68,7 +68,9 @@ public class ReporteService {
                 .collect(Collectors.groupingBy(i -> i.getEstado().name(), LinkedHashMap::new, Collectors.counting()));
 
         Map<String, Long> porCategoria = incidencias.stream()
-                .collect(Collectors.groupingBy(i -> i.getCategoria().name(), LinkedHashMap::new, Collectors.counting()));
+                .collect(Collectors.groupingBy(
+                        i -> i.getCategoria() != null ? i.getCategoria().name() : "SIN_CLASIFICAR",
+                        LinkedHashMap::new, Collectors.counting()));
 
         String categoriaMasFrecuente = porCategoria.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
@@ -262,8 +264,8 @@ public class ReporteService {
 
         return List.of(
                 String.valueOf(i.getId()),
-                i.getTitulo(),
-                i.getCategoria().name(),
+                i.getTitulo() != null ? i.getTitulo() : "",
+                i.getCategoria() != null ? i.getCategoria().name() : "SIN_CLASIFICAR",
                 i.getEstado().name(),
                 i.getPrioridad().name(),
                 i.getCiudadano().getNombre() + " " + (i.getCiudadano().getApellido() != null ? i.getCiudadano().getApellido() : ""),

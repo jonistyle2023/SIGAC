@@ -23,6 +23,7 @@ public enum AuditAction {
 
     // Módulo 4: Clasificación IA
     INCIDENT_AI_CLASSIFIED,
+    INCIDENT_CRITICAL_ALERT,
 
     // Módulo 5: Asignación y Despacho
     INCIDENT_ASSIGN,
