@@ -10,8 +10,6 @@ import com.example.sigac.repository.IncidenciaMultimediaRepository;
 import com.example.sigac.repository.IncidenciaRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +20,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
+import software.amazon.awssdk.services.bedrockruntime.model.ContentBlock;
+import software.amazon.awssdk.services.bedrockruntime.model.ConversationRole;
+import software.amazon.awssdk.services.bedrockruntime.model.ConverseRequest;
+import software.amazon.awssdk.services.bedrockruntime.model.ConverseResponse;
+import software.amazon.awssdk.services.bedrockruntime.model.ImageBlock;
+import software.amazon.awssdk.services.bedrockruntime.model.ImageFormat;
+import software.amazon.awssdk.services.bedrockruntime.model.ImageSource;
+import software.amazon.awssdk.services.bedrockruntime.model.InferenceConfiguration;
+import software.amazon.awssdk.services.bedrockruntime.model.Message;
+import software.amazon.awssdk.services.bedrockruntime.model.SystemContentBlock;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
@@ -41,21 +45,16 @@ public class AiClassificationService {
     private final AuditService auditService;
     private final S3Service s3Service;
     private final ObjectMapper objectMapper;
+    private final BedrockRuntimeClient bedrockRuntimeClient;
 
-    @Value("${gemini.api.key:}")
-    private String geminiApiKey;
-
-    @Value("${gemini.model:gemini-2.0-flash}")
-    private String model;
+    @Value("${bedrock.model-id:us.anthropic.claude-haiku-4-5-20251001-v1:0}")
+    private String modelId;
 
     @Value("${sigac.ia.umbral-confianza:0.65}")
     private double umbralConfianza;
 
     private static final int TITULO_MAX_LENGTH = 200;
-
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
+    private static final int MAX_OUTPUT_TOKENS = 512;
 
     // ─── Entry point ─────────────────────────────────────────────────────────
     // Fires after la evidencia (primera foto) queda confirmada, tras el commit, de forma asíncrona.
@@ -63,12 +62,6 @@ public class AiClassificationService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async("classificationExecutor")
     public void onEvidenciaLista(IncidenciaEvidenciaListaEvent event) {
-        if (geminiApiKey.isBlank()) {
-            log.warn("Gemini API key no configurada; incidencia {} queda marcada para revisión manual", event.incidenciaId());
-            marcarRevisionManualPorFallo(event.incidenciaId());
-            return;
-        }
-
         ClasificacionIaResult result;
         try {
             byte[] imagenOriginal = s3Service.descargarObjeto(event.s3Key());
@@ -77,7 +70,7 @@ public class AiClassificationService {
                     .orElse("image/jpeg");
             S3Service.ImagenProcesada imagen = s3Service.prepararImagenParaClasificacion(imagenOriginal, mimeTypeOriginal);
 
-            result = clasificarConGemini(imagen.bytes(), imagen.mimeType(), event.descripcionOpcional());
+            result = clasificarConBedrock(imagen.bytes(), imagen.mimeType(), event.descripcionOpcional());
         } catch (Exception e) {
             log.error("Error en clasificación IA, incidencia {}: {}", event.incidenciaId(), e.getMessage());
             result = null;
@@ -95,63 +88,52 @@ public class AiClassificationService {
                 result.isEsValido(), String.format("%.2f", result.getConfianza()));
     }
 
-    // ─── Clasificación multimodal con Gemini API ─────────────────────────────
+    // ─── Clasificación multimodal con Amazon Bedrock (Converse API) ──────────
 
-    private ClasificacionIaResult clasificarConGemini(byte[] imagen, String mimeType, String descripcion) throws Exception {
-        ObjectNode systemInstruction = objectMapper.createObjectNode();
-        ArrayNode sysParts = systemInstruction.putArray("parts");
-        sysParts.addObject().put("text", SYSTEM_PROMPT);
-
-        ArrayNode contents = objectMapper.createArrayNode();
-        ObjectNode userMsg = contents.addObject();
-        userMsg.put("role", "user");
-        ArrayNode parts = userMsg.putArray("parts");
-        parts.addObject().put("text", buildUserPrompt(descripcion));
-        ObjectNode inlineData = parts.addObject().putObject("inline_data");
-        inlineData.put("mime_type", mimeType);
-        inlineData.put("data", Base64.getEncoder().encodeToString(imagen));
-
-        ObjectNode generationConfig = objectMapper.createObjectNode();
-        generationConfig.put("responseMimeType", "application/json");
-        generationConfig.put("temperature", 0.1);
-        generationConfig.put("maxOutputTokens", 512);
-
-        ObjectNode body = objectMapper.createObjectNode();
-        body.set("systemInstruction", systemInstruction);
-        body.set("contents", contents);
-        body.set("generationConfig", generationConfig);
-
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/"
-                + model + ":generateContent?key=" + geminiApiKey;
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("content-type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
-                .timeout(Duration.ofSeconds(30))
+    private ClasificacionIaResult clasificarConBedrock(byte[] imagen, String mimeType, String descripcion) {
+        Message userMessage = Message.builder()
+                .role(ConversationRole.USER)
+                .content(
+                        ContentBlock.fromText(buildUserPrompt(descripcion)),
+                        ContentBlock.fromImage(ImageBlock.builder()
+                                .format(mapImageFormat(mimeType))
+                                .source(ImageSource.fromBytes(SdkBytes.fromByteArray(imagen)))
+                                .build())
+                )
                 .build();
 
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        ConverseRequest request = ConverseRequest.builder()
+                .modelId(modelId)
+                .system(SystemContentBlock.fromText(SYSTEM_PROMPT))
+                .messages(userMessage)
+                .inferenceConfig(InferenceConfiguration.builder()
+                        .maxTokens(MAX_OUTPUT_TOKENS)
+                        .temperature(0.1f)
+                        .build())
+                .build();
 
-        if (response.statusCode() != 200) {
-            log.warn("Gemini API retornó HTTP {}, incidencia queda para revisión manual. Body: {}",
-                    response.statusCode(), response.body());
-            return null;
-        }
-
-        JsonNode root = objectMapper.readTree(response.body());
-        String text = root.path("candidates").path(0)
-                .path("content").path("parts").path(0).path("text").asText();
+        ConverseResponse response = bedrockRuntimeClient.converse(request);
+        String text = response.output().message().content().get(0).text();
 
         ClasificacionIaResult result = parsearRespuesta(text);
         if (result == null) {
-            log.warn("No se pudo parsear respuesta de Gemini, incidencia queda para revisión manual. Respuesta cruda: {}", text);
+            log.warn("No se pudo parsear respuesta del modelo, incidencia queda para revisión manual. Respuesta cruda: {}", text);
         } else if ((result.getTitulo() == null || result.getTitulo().isBlank())
                 || (result.getResumen() == null || result.getResumen().isBlank())) {
-            log.warn("Gemini devolvió titulo/resumen vacío (esValido={}, categoria={}). Descripción del ciudadano presente={}. Respuesta cruda: {}",
+            log.warn("El modelo devolvió titulo/resumen vacío (esValido={}, categoria={}). Descripción del ciudadano presente={}. Respuesta cruda: {}",
                     result.isEsValido(), result.getCategoria(), descripcion != null && !descripcion.isBlank(), text);
         }
         return result;
+    }
+
+    private ImageFormat mapImageFormat(String mimeType) {
+        if (mimeType == null) return ImageFormat.JPEG;
+        return switch (mimeType.toLowerCase()) {
+            case "image/png" -> ImageFormat.PNG;
+            case "image/webp" -> ImageFormat.WEBP;
+            case "image/gif" -> ImageFormat.GIF;
+            default -> ImageFormat.JPEG;
+        };
     }
 
     // ─── Persistir resultado ──────────────────────────────────────────────────
@@ -204,8 +186,9 @@ public class AiClassificationService {
     @Transactional
     void marcarRevisionManualPorFallo(Long incidenciaId) {
         incidenciaRepository.findById(incidenciaId).ifPresent(incidencia -> {
-            incidencia.setIaClasificado(true);
-            incidencia.setIaConfianza(0.0);
+            // iaClasificado queda en false a propósito: la IA nunca produjo un resultado real
+            // (fallo de red, cuota excedida, respuesta no parseable), así que no hay nada que
+            // mostrar como "análisis". Mostrar 0% de certeza aquí sería engañoso — ver historial.
             incidencia.setRequiereRevisionManual(true);
             incidencia.setEstado(EstadoIncidencia.EN_REVISION);
             incidenciaRepository.save(incidencia);
@@ -282,13 +265,24 @@ public class AiClassificationService {
                   "esValido": true or false,
                   "confianza": 0.0 to 1.0,
                   "resumen": "Una oración en español resumiendo el problema",
-                  "razonRechazo": null or "Razón en español de por qué esto no es válido"
+                  "razonRechazo": null or "Mensaje en español (ver instrucciones abajo)"
                 }
 
                 Categorías: INFRAESTRUCTURA=vías/baches/puentes/aceras, SEGURIDAD=crimen/asalto/vandalismo,
                 SERVICIOS_PUBLICOS=agua/electricidad/basura/alcantarillado, MEDIO_AMBIENTE=contaminación/vertederos/tala.
                 Marca esValido=false SOLO si la imagen no muestra ninguna incidencia cívica identificable
                 (foto irrelevante, ilegible, o contenido claramente no relacionado con un reporte cívico).
+
+                Si esValido=true: "titulo" y "resumen" son OBLIGATORIOS y nunca pueden quedar vacíos ni ser
+                genéricos — describe específicamente lo que ves en la imagen, incluso si el ciudadano no
+                escribió ninguna descripción de texto.
+
+                Si esValido=false: "razonRechazo" NO debe sonar como un mensaje de error de sistema. Debe sonar
+                como un asistente simpático que sí miró la foto con atención: reacciona primero con una
+                observación breve y genuina sobre lo que aparece (por ejemplo, si es una mascota, elógiala
+                específicamente; si es comida, un selfie, un paisaje, etc., comenta algo simpático y concreto
+                sobre eso), y luego invita con calidez a enviar una foto real del problema a reportar. Máximo
+                2 oraciones, tono cercano y humano — nunca un genérico "esto no es una incidencia válida".
                 """.formatted(contextoTexto);
     }
 

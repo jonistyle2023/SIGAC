@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Camera, Images, MapPin, Loader2, Navigation, AlertCircle,
-  CheckCircle2, Pencil, PhoneCall, ChevronDown, ChevronUp,
+  CheckCircle2, Pencil, PhoneCall, ChevronDown, ChevronUp, Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import incidenciaService from '../../services/incidencia.service';
@@ -186,6 +186,22 @@ const NuevaIncidencia = () => {
 
   const irADetalle = () => navigate(`/mis-incidencias/${incidenciaId}`);
 
+  const reiniciar = () => {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setLocation(null);
+    setLocationDenied(false);
+    setDireccionReferencia('');
+    setShowDetails(false);
+    setTitulo('');
+    setDescripcion('');
+    setIncidenciaId(null);
+    setPolling(false);
+    setPollTimedOut(false);
+    setResultado(null);
+  };
+
   const abrirCorreccion = () => {
     setCorrectionForm({
       titulo: resultado?.titulo || '',
@@ -214,6 +230,40 @@ const NuevaIncidencia = () => {
   // ─── Pantalla: resultado de la clasificación IA ──────────────────────────
   if (resultado) {
     const gravedad = GRAVEDAD[resultado.iaPrioridad] || null;
+    const rechazado = resultado.estado === 'RECHAZADO';
+
+    if (rechazado) {
+      return (
+        <div className="space-y-5">
+          <h1 className="text-xl font-bold text-gray-900">¡Foto recibida!</h1>
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3">
+            <Sparkles className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-amber-900">
+              <p className="leading-relaxed">
+                {resultado.iaRazonRechazo || 'Miramos tu foto, pero no logramos identificar una incidencia cívica en ella.'}
+              </p>
+              <p className="text-xs text-amber-700 mt-2">
+                Nuestra IA revisa cada foto para detectar incidencias reales — intenta con una que muestre el problema que quieres reportar.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={reiniciar}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm"
+            >
+              <Camera className="h-4 w-4" /> Tomar otra foto
+            </button>
+            <button
+              onClick={irADetalle}
+              className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50"
+            >
+              Ver mi reporte
+            </button>
+          </div>
+        </div>
+      );
+    }
 
     if (correcting) {
       return (

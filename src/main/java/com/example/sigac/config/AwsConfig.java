@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
@@ -25,6 +26,16 @@ public class AwsConfig {
     @Bean
     public S3Presigner s3Presigner() {
         return S3Presigner.builder()
+                .region(Region.of(awsRegion))
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .build();
+    }
+
+    // Clasificación IA (Módulo 4) — usa las credenciales del rol de la tarea ECS,
+    // sin API key separada. Ver sigac.ia.* en application.properties.
+    @Bean
+    public BedrockRuntimeClient bedrockRuntimeClient() {
+        return BedrockRuntimeClient.builder()
                 .region(Region.of(awsRegion))
                 .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
