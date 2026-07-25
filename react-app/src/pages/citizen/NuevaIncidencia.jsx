@@ -204,8 +204,8 @@ const NuevaIncidencia = () => {
 
   const abrirCorreccion = () => {
     setCorrectionForm({
-      titulo: resultado?.titulo || '',
-      descripcion: resultado?.descripcion || '',
+      titulo: resultado?.titulo || titulo || '',
+      descripcion: resultado?.descripcion || descripcion || '',
       categoria: resultado?.categoria || '',
     });
     setCorrecting(true);
@@ -226,6 +226,63 @@ const NuevaIncidencia = () => {
       setSavingCorrection(false);
     }
   };
+
+  // ─── Pantalla: agregar/corregir detalles (alcanzable con o sin resultado de IA) ──
+  if (correcting) {
+    return (
+      <div className="space-y-5">
+        <h1 className="text-xl font-bold text-gray-900">Corregir reporte</h1>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Título</label>
+            <input
+              className={inputClass}
+              value={correctionForm.titulo}
+              onChange={(e) => setCorrectionForm(p => ({ ...p, titulo: e.target.value }))}
+              maxLength={200}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Categoría</label>
+            <select
+              className={inputClass}
+              value={correctionForm.categoria}
+              onChange={(e) => setCorrectionForm(p => ({ ...p, categoria: e.target.value }))}
+            >
+              <option value="">Sin especificar</option>
+              {CATEGORIAS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Descripción</label>
+            <textarea
+              className={inputClass + ' resize-none'}
+              rows={5}
+              value={correctionForm.descripcion}
+              onChange={(e) => setCorrectionForm(p => ({ ...p, descripcion: e.target.value }))}
+              maxLength={5000}
+            />
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setCorrecting(false)}
+              disabled={savingCorrection}
+              className="flex-1 py-3 border-2 border-gray-200 text-gray-600 rounded-xl font-semibold text-sm hover:bg-gray-50 disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={guardarCorreccion}
+              disabled={savingCorrection}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm disabled:opacity-60"
+            >
+              {savingCorrection ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Guardar'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Pantalla: resultado de la clasificación IA ──────────────────────────
   if (resultado) {
@@ -260,62 +317,6 @@ const NuevaIncidencia = () => {
             >
               Ver mi reporte
             </button>
-          </div>
-        </div>
-      );
-    }
-
-    if (correcting) {
-      return (
-        <div className="space-y-5">
-          <h1 className="text-xl font-bold text-gray-900">Corregir reporte</h1>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Título</label>
-              <input
-                className={inputClass}
-                value={correctionForm.titulo}
-                onChange={(e) => setCorrectionForm(p => ({ ...p, titulo: e.target.value }))}
-                maxLength={200}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Categoría</label>
-              <select
-                className={inputClass}
-                value={correctionForm.categoria}
-                onChange={(e) => setCorrectionForm(p => ({ ...p, categoria: e.target.value }))}
-              >
-                <option value="">Sin especificar</option>
-                {CATEGORIAS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Descripción</label>
-              <textarea
-                className={inputClass + ' resize-none'}
-                rows={5}
-                value={correctionForm.descripcion}
-                onChange={(e) => setCorrectionForm(p => ({ ...p, descripcion: e.target.value }))}
-                maxLength={5000}
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setCorrecting(false)}
-                disabled={savingCorrection}
-                className="flex-1 py-3 border-2 border-gray-200 text-gray-600 rounded-xl font-semibold text-sm hover:bg-gray-50 disabled:opacity-60"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={guardarCorreccion}
-                disabled={savingCorrection}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm disabled:opacity-60"
-              >
-                {savingCorrection ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Guardar'}
-              </button>
-            </div>
           </div>
         </div>
       );
@@ -383,16 +384,31 @@ const NuevaIncidencia = () => {
             </>
           ) : (
             <>
-              <CheckCircle2 className="h-8 w-8 text-green-500" />
-              <p className="text-sm text-gray-600">Tu reporte fue registrado y está siendo analizado. Te avisaremos cuando haya novedades.</p>
+              <Sparkles className="h-8 w-8 text-amber-500" />
+              <p className="text-sm text-gray-600">
+                Tu reporte ya quedó registrado, pero no logramos analizar la foto automáticamente esta vez.
+                Puedes agregar un título y descripción para ayudar a que se revise más rápido.
+              </p>
             </>
           )}
-          <button
-            onClick={irADetalle}
-            className="mt-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
-          >
-            Ver mi reporte
-          </button>
+          <div className="flex gap-3 w-full mt-2">
+            {pollTimedOut && (
+              <button
+                onClick={abrirCorreccion}
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm"
+              >
+                <Pencil className="h-4 w-4" /> Agregar detalles
+              </button>
+            )}
+            <button
+              onClick={irADetalle}
+              className={pollTimedOut
+                ? 'flex-1 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50'
+                : 'text-sm font-semibold text-blue-600 hover:text-blue-700'}
+            >
+              Ver mi reporte
+            </button>
+          </div>
         </div>
       </div>
     );

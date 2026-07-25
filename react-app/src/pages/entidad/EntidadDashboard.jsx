@@ -44,10 +44,12 @@ const EntidadDashboard = () => {
       </div>
 
       {loading ? <LoadingSpinner /> : (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <StatCard title="Asignadas" value={stats.total} icon={ClipboardCheck} colorClass="bg-blue-50 text-blue-600" />
           <StatCard title="En Proceso" value={stats.enProceso} icon={Clock} colorClass="bg-orange-50 text-orange-500" />
-          <StatCard title="Resueltas" value={stats.resueltas} icon={CheckCircle} colorClass="bg-green-50 text-green-600" />
+          <div className="col-span-2 sm:col-span-1">
+            <StatCard title="Resueltas" value={stats.resueltas} icon={CheckCircle} colorClass="bg-green-50 text-green-600" />
+          </div>
         </div>
       )}
 

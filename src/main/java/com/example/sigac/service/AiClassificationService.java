@@ -189,8 +189,12 @@ public class AiClassificationService {
             // iaClasificado queda en false a propósito: la IA nunca produjo un resultado real
             // (fallo de red, cuota excedida, respuesta no parseable), así que no hay nada que
             // mostrar como "análisis". Mostrar 0% de certeza aquí sería engañoso — ver historial.
+            //
+            // El estado queda en PENDIENTE (no se toca) a propósito también: IncidenciaService.actualizar()
+            // solo deja editar al ciudadano mientras está PENDIENTE. Si aquí lo pasáramos a EN_REVISION,
+            // el ciudadano perdería la única ventana para agregar título/descripción manualmente justo
+            // cuando la IA no pudo hacerlo por él.
             incidencia.setRequiereRevisionManual(true);
-            incidencia.setEstado(EstadoIncidencia.EN_REVISION);
             incidenciaRepository.save(incidencia);
 
             auditService.log(AuditAction.INCIDENT_AI_CLASSIFIED, "incidencia", incidenciaId,
