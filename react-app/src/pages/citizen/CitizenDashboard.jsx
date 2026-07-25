@@ -45,10 +45,12 @@ const CitizenDashboard = () => {
 
       {/* Stats */}
       {loading ? <LoadingSpinner /> : (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <StatCard title="Total" value={data.total} icon={FileText} colorClass="bg-blue-50 text-blue-600" />
           <StatCard title="En Proceso" value={data.enProceso} icon={Clock} colorClass="bg-orange-50 text-orange-500" />
-          <StatCard title="Resueltas" value={data.resueltas} icon={CheckCircle} colorClass="bg-green-50 text-green-600" />
+          <div className="col-span-2 sm:col-span-1">
+            <StatCard title="Resueltas" value={data.resueltas} icon={CheckCircle} colorClass="bg-green-50 text-green-600" />
+          </div>
         </div>
       )}
 
