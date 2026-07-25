@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, User, Tag, Loader2, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import incidenciaService from '../../services/incidencia.service';
 import entidadService from '../../services/entidad.service';
 import { StatusBadge, CategoryBadge, PriorityBadge } from '../../components/ui/StatusBadge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { getErrorMessage } from '../../utils/errors';
 
 const ESTADOS = ['PENDIENTE', 'EN_REVISION', 'EN_PROCESO', 'RESUELTO', 'RECHAZADO'];
 
 const AdminIncidenciaDetalle = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [inc, setInc] = useState(null);
   const [entidades, setEntidades] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,7 @@ const AdminIncidenciaDetalle = () => {
       setInc(res.data);
       toast.success('Estado actualizado');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al cambiar estado');
+      toast.error(getErrorMessage(err, 'Error al cambiar estado'));
     } finally {
       setSavingEstado(false);
     }
@@ -57,7 +57,7 @@ const AdminIncidenciaDetalle = () => {
       setInc(res.data);
       toast.success('Incidencia asignada');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al asignar');
+      toast.error(getErrorMessage(err, 'Error al asignar'));
     } finally {
       setSavingAsign(false);
     }

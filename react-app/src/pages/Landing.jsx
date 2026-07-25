@@ -1,6 +1,5 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, MessageSquare, BarChart3, Users, ArrowRight } from 'lucide-react';
+import { Shield, MessageSquare, BarChart3, ArrowRight } from 'lucide-react';
 
 const Landing = () => {
     return (

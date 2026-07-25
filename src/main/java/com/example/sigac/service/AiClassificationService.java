@@ -145,7 +145,11 @@ public class AiClassificationService {
 
         ClasificacionIaResult result = parsearRespuesta(text);
         if (result == null) {
-            log.warn("No se pudo parsear respuesta de Gemini, incidencia queda para revisión manual");
+            log.warn("No se pudo parsear respuesta de Gemini, incidencia queda para revisión manual. Respuesta cruda: {}", text);
+        } else if ((result.getTitulo() == null || result.getTitulo().isBlank())
+                || (result.getResumen() == null || result.getResumen().isBlank())) {
+            log.warn("Gemini devolvió titulo/resumen vacío (esValido={}, categoria={}). Descripción del ciudadano presente={}. Respuesta cruda: {}",
+                    result.isEsValido(), result.getCategoria(), descripcion != null && !descripcion.isBlank(), text);
         }
         return result;
     }

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Mail, Lock, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getErrorMessage } from '../utils/errors';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ const Login = () => {
             await login(email, password);
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || 'Error al iniciar sesión. Verifica tus credenciales.');
+            setError(getErrorMessage(err, 'Error al iniciar sesión. Verifica tus credenciales.'));
         } finally {
             setIsSubmitting(false);
         }

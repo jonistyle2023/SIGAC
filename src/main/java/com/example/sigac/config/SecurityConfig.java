@@ -3,6 +3,9 @@ package com.example.sigac.config;
 import com.example.sigac.security.JwtAuthenticationFilter;
 import com.example.sigac.security.CustomUserDetailsService;
 import com.example.sigac.security.JwtTokenProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -23,8 +26,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -38,6 +45,7 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final ObjectMapper objectMapper;
 
     @Value("${cors.allowed-origins}")
     private String allowedOriginsRaw;
@@ -85,11 +93,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .exceptionHandling(exception -> exception
-                    .authenticationEntryPoint((request, response, authException) -> {
-                        response.setStatus(401);
-                        response.setContentType("application/json");
-                        response.getWriter().write("{\"error\": \"No autorizado\", \"mensaje\": \"" + authException.getMessage() + "\"}");
-                    }))
+                    .authenticationEntryPoint((request, response, authException) ->
+                            writeError(response, request, HttpServletResponse.SC_UNAUTHORIZED,
+                                    "No autorizado", "Debe autenticarse para acceder a este recurso"))
+                    .accessDeniedHandler((request, response, accessDeniedException) ->
+                            writeError(response, request, HttpServletResponse.SC_FORBIDDEN,
+                                    "Acceso denegado", "No tiene permisos para realizar esta acción")))
             .sessionManagement(session -> session
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
@@ -130,5 +139,22 @@ public class SecurityConfig {
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // Mismo formato que GlobalExceptionHandler.ErrorResponse — así 401/403 emitidos por Spring Security
+    // (antes de llegar a un @RestController) devuelven el mismo JSON uniforme que el resto de la API.
+    private void writeError(HttpServletResponse response, HttpServletRequest request, int status, String error, String message)
+            throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now().toString());
+        body.put("status", status);
+        body.put("error", error);
+        body.put("message", message);
+        body.put("path", request.getRequestURI());
+
+        response.getWriter().write(objectMapper.writeValueAsString(body));
     }
 }

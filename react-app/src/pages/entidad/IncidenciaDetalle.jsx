@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import incidenciaService from '../../services/incidencia.service';
 import { StatusBadge, CategoryBadge, PriorityBadge } from '../../components/ui/StatusBadge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { getErrorMessage } from '../../utils/errors';
 
 const EntidadIncidenciaDetalle = () => {
   const { id } = useParams();
@@ -27,7 +28,7 @@ const EntidadIncidenciaDetalle = () => {
       setInc(res.data);
       toast.success(`Incidencia marcada como ${estado === 'RESUELTO' ? 'resuelta' : 'rechazada'}`);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al cambiar estado');
+      toast.error(getErrorMessage(err, 'Error al cambiar estado'));
     } finally {
       setSaving(null);
     }

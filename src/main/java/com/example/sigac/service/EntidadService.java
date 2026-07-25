@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,16 +34,12 @@ public class EntidadService {
 
     @Transactional(readOnly = true)
     public List<EntidadResponse> obtenerTodas() {
-        return entidadRepository.findAllByOrderByNombreAsc().stream()
-                .map(this::toDTO)
-                .toList();
+        return toDTOs(entidadRepository.findAllByOrderByNombreAsc());
     }
 
     @Transactional(readOnly = true)
     public List<EntidadResponse> obtenerActivas() {
-        return entidadRepository.findByActivoTrueOrderByNombreAsc().stream()
-                .map(this::toDTO)
-                .toList();
+        return toDTOs(entidadRepository.findByActivoTrueOrderByNombreAsc());
     }
 
     @Transactional(readOnly = true)
@@ -153,7 +151,23 @@ public class EntidadService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
 
+    // Batch: una sola query agrupada para el conteo de funcionarios de toda la lista,
+    // en vez de una query por entidad (ver EntidadRepository.countFuncionariosByEntidadIds).
+    private List<EntidadResponse> toDTOs(List<Entidad> entidades) {
+        if (entidades.isEmpty()) return List.of();
+        List<Long> ids = entidades.stream().map(Entidad::getId).toList();
+        Map<Long, Long> conteos = entidadRepository.countFuncionariosByEntidadIds(ids).stream()
+                .collect(Collectors.toMap(fila -> (Long) fila[0], fila -> (Long) fila[1]));
+        return entidades.stream()
+                .map(entidad -> toDTO(entidad, conteos.getOrDefault(entidad.getId(), 0L)))
+                .toList();
+    }
+
     private EntidadResponse toDTO(Entidad entidad) {
+        return toDTO(entidad, entidadRepository.countFuncionariosByEntidadId(entidad.getId()));
+    }
+
+    private EntidadResponse toDTO(Entidad entidad, long totalFuncionarios) {
         return EntidadResponse.builder()
                 .id(entidad.getId())
                 .nombre(entidad.getNombre())
@@ -163,7 +177,7 @@ public class EntidadService {
                 .emailContacto(entidad.getEmailContacto())
                 .activo(entidad.getActivo())
                 .fechaCreacion(entidad.getFechaCreacion() != null ? entidad.getFechaCreacion().toString() : null)
-                .totalFuncionarios(entidadRepository.countFuncionariosByEntidadId(entidad.getId()))
+                .totalFuncionarios(totalFuncionarios)
                 .build();
     }
 }

@@ -7,6 +7,7 @@ import {
 import toast from 'react-hot-toast';
 import incidenciaService from '../../services/incidencia.service';
 import { CategoryBadge } from '../../components/ui/StatusBadge';
+import { getErrorMessage } from '../../utils/errors';
 
 const CATEGORIAS = [
   { value: 'INFRAESTRUCTURA', label: 'Infraestructura' },
@@ -65,6 +66,17 @@ const NuevaIncidencia = () => {
   useEffect(() => {
     return () => { if (photoPreview) URL.revokeObjectURL(photoPreview); };
   }, [photoPreview]);
+
+  // Sondeo de clasificación IA: se debe poder cancelar si el usuario navega
+  // fuera antes de que termine (evita setState sobre un componente desmontado).
+  const pollTimeoutRef = useRef(null);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+    };
+  }, []);
 
   const solicitarUbicacion = () => {
     if (!navigator.geolocation) {
@@ -138,7 +150,7 @@ const NuevaIncidencia = () => {
       setSubmitting(false);
       iniciarSondeo(incidencia.id);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al enviar el reporte');
+      toast.error(getErrorMessage(err, 'Error al enviar el reporte'));
       setSubmitting(false);
     }
   };
@@ -151,6 +163,7 @@ const NuevaIncidencia = () => {
     const tick = async () => {
       try {
         const { data } = await incidenciaService.obtenerPorId(id);
+        if (!mountedRef.current) return;
         if (data.iaClasificado) {
           setPolling(false);
           setResultado(data);
@@ -159,15 +172,16 @@ const NuevaIncidencia = () => {
       } catch {
         // sigue intentando hasta el timeout
       }
+      if (!mountedRef.current) return;
       if (Date.now() - startedAt >= POLL_TIMEOUT_MS) {
         setPolling(false);
         setPollTimedOut(true);
         return;
       }
-      setTimeout(tick, POLL_INTERVAL_MS);
+      pollTimeoutRef.current = setTimeout(tick, POLL_INTERVAL_MS);
     };
 
-    setTimeout(tick, POLL_INTERVAL_MS);
+    pollTimeoutRef.current = setTimeout(tick, POLL_INTERVAL_MS);
   };
 
   const irADetalle = () => navigate(`/mis-incidencias/${incidenciaId}`);
@@ -192,7 +206,7 @@ const NuevaIncidencia = () => {
       toast.success('Reporte actualizado');
       irADetalle();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al guardar la corrección');
+      toast.error(getErrorMessage(err, 'Error al guardar la corrección'));
       setSavingCorrection(false);
     }
   };

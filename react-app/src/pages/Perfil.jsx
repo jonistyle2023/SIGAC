@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Lock, Save, Loader2, IdCard, Eye, EyeOff, CheckCircle, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import usuarioService from '../services/usuario.service';
+import { getErrorMessage } from '../utils/errors';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { RoleBadge } from '../components/ui/StatusBadge';
 
@@ -61,18 +62,25 @@ const Perfil = () => {
       setPerfil(res.data);
       toast.success('Perfil actualizado');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al actualizar el perfil');
+      toast.error(getErrorMessage(err, 'Error al actualizar el perfil'));
     } finally {
       setSaving(false);
     }
   };
 
+  const passNuevaChecks = {
+    length:  passForm.passwordNueva.length >= 8,
+    lower:   /[a-z]/.test(passForm.passwordNueva),
+    upper:   /[A-Z]/.test(passForm.passwordNueva),
+    digit:   /[0-9]/.test(passForm.passwordNueva),
+    special: /[^A-Za-z0-9]/.test(passForm.passwordNueva),
+  };
+  const passNuevaStrong = Object.values(passNuevaChecks).every(Boolean);
+
   const handlePassChange = async (e) => {
     e.preventDefault();
-    const pw = passForm.passwordNueva;
-    const strong = pw.length >= 8 && /[a-zA-Z]/.test(pw) && /[0-9!@#$%^&*()\-_+=.,;:'"<>?/\\[\]{}|`~]/.test(pw);
-    if (!strong) {
-      toast.error('La nueva contraseña no cumple los requisitos mínimos');
+    if (!passNuevaStrong) {
+      toast.error('La nueva contraseña no cumple los requisitos mínimos (revisa la lista debajo del campo)');
       return;
     }
     if (passForm.passwordNueva !== passForm.confirmPasswordNueva) {
@@ -85,7 +93,7 @@ const Perfil = () => {
       toast.success('Contraseña actualizada exitosamente');
       setPassForm({ passwordActual: '', passwordNueva: '', confirmPasswordNueva: '' });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al cambiar la contraseña');
+      toast.error(getErrorMessage(err, 'Error al cambiar la contraseña'));
     } finally {
       setChangingPass(false);
     }
@@ -232,9 +240,11 @@ const Perfil = () => {
             </div>
             {passForm.passwordNueva.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1">
-                <PwCheck ok={passForm.passwordNueva.length >= 8}                                                                    label="8 caracteres" />
-                <PwCheck ok={/[a-zA-Z]/.test(passForm.passwordNueva)}                                                              label="Una letra" />
-                <PwCheck ok={/[0-9!@#$%^&*()\-_+=.,;:'"<>?/\\[\]{}|`~]/.test(passForm.passwordNueva)} label="Un número o símbolo" />
+                <PwCheck ok={passNuevaChecks.length}  label="8 caracteres" />
+                <PwCheck ok={passNuevaChecks.lower}   label="Una minúscula" />
+                <PwCheck ok={passNuevaChecks.upper}   label="Una mayúscula" />
+                <PwCheck ok={passNuevaChecks.digit}   label="Un número" />
+                <PwCheck ok={passNuevaChecks.special} label="Un carácter especial" />
               </div>
             )}
           </div>
