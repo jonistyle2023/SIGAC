@@ -41,3 +41,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local dev scripts (contain account-specific ARNs/endpoints) ###
+run-local-aurora.sh
