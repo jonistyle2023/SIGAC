@@ -23,14 +23,14 @@ public class Incidencia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 200)
+    @Column(length = 200)
     private String titulo;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private CategoriaIncidencia categoria;
 
     @Enumerated(EnumType.STRING)
@@ -96,6 +96,16 @@ public class Incidencia {
 
     @Column(name = "ia_razon_rechazo", length = 500)
     private String iaRazonRechazo;
+
+    // ─── Origen del reporte y revisión manual ────────────────────────────────
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origen_reporte", length = 30)
+    private OrigenReporte origenReporte;
+
+    @Column(name = "requiere_revision_manual", nullable = false)
+    @Builder.Default
+    private Boolean requiereRevisionManual = false;
 
     @PreUpdate
     protected void onUpdate() {

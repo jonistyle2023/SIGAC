@@ -71,7 +71,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin"));
-        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -83,7 +83,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> {})
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .exceptionHandling(exception -> exception
                     .authenticationEntryPoint((request, response, authException) -> {
                         response.setStatus(401);
@@ -118,6 +118,10 @@ public class SecurityConfig {
                     .requestMatchers("/api/incidencias/**").authenticated()
                     // Auditoría: solo administradores
                     .requestMatchers(HttpMethod.GET, "/api/audit/**").hasRole("ADMINISTRADOR")
+                    // Notificaciones: cualquier usuario autenticado (filtradas por destinatario en el servicio)
+                    .requestMatchers("/api/notificaciones/**").authenticated()
+                    // Reportería y analítica: solo administradores
+                    .requestMatchers("/api/reportes/**").hasRole("ADMINISTRADOR")
                     .anyRequest().authenticated()
             );
 

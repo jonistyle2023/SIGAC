@@ -41,4 +41,8 @@ public class IncidenciaResponse {
     private Double  iaConfianza;
     private String  iaResumen;
     private String  iaRazonRechazo;
+
+    private Boolean requiereRevisionManual;
+    private String  origenReporte;
+    private boolean alertaEmergencia;
 }

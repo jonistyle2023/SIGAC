@@ -5,6 +5,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Claude
+.claude
+CLAUDE.md
+
 ### AWS / CI deployment artifacts ###
 task-def.json
 task-def-updated.json

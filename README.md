@@ -15,6 +15,9 @@ SIGAC es una plataforma web y móvil para que los ciudadanos reporten incidencia
 ### Backend
 ```bash
 ./mvnw spring-boot:run
+
+# Ejecutar en perfil de desarrollo
+$env:SPRING_PROFILES_ACTIVE="dev"; ./mvnw spring-boot:run
 ```
 
 ### Frontend

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "amazon-aurora-mysql": {
+      "source": "aws/agent-toolkit-for-aws",
+      "sourceType": "github",
+      "skillPath": "skills/specialized-skills/database-skills/amazon-aurora-mysql/SKILL.md",
+      "computedHash": "dd0cd9431eb95d04c7fcfc0e978fa157ae5408e492b1f3b23edc79fd6f2724eb"
+    }
+  }
+}

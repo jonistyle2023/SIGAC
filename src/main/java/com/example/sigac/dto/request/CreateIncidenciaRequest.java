@@ -10,15 +10,12 @@ import java.math.BigDecimal;
 @Data
 public class CreateIncidenciaRequest {
 
-    @NotBlank(message = "El título es obligatorio")
     @Size(max = 200, message = "El título no puede superar los 200 caracteres")
     private String titulo;
 
-    @NotBlank(message = "La descripción es obligatoria")
     @Size(max = 5000, message = "La descripción no puede superar los 5000 caracteres")
     private String descripcion;
 
-    @NotNull(message = "La categoría es obligatoria")
     private CategoriaIncidencia categoria;
 
     private PrioridadIncidencia prioridad;
@@ -33,4 +30,7 @@ public class CreateIncidenciaRequest {
 
     @Size(max = 500, message = "La dirección de referencia no puede superar los 500 caracteres")
     private String direccionReferencia;
+
+    // La obligatoriedad real (GPS completo O dirección de referencia) se valida en
+    // IncidenciaService.crear(), no aquí: son dos formas alternativas de cumplir el mismo requisito.
 }

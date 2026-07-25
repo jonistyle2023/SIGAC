@@ -35,7 +35,7 @@ const BottomNav = () => {
         <NavLink
           key={to}
           to={to}
-          end={to === '/dashboard'}
+          end={to === '/dashboard' || to === '/mis-incidencias'}
           className={({ isActive }) =>
             `flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors ${
               isActive ? 'text-blue-600' : 'text-gray-400'
